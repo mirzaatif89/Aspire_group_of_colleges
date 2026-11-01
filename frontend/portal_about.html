@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - Readers Line Grammer School Jand</title>
+    <link rel="icon" type="image/png" href="images/logo.png">
+    <link rel="stylesheet" href="style.css?v=20260814-centered-school-name">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background: #f6f8fb;
+            color: var(--text-primary);
+            font-family: var(--font-family, "Inter", Arial, sans-serif);
+        }
+
+        .portal-about-page {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .portal-about-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1rem clamp(1rem, 4vw, 3rem);
+            background: var(--surface-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .portal-about-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            min-width: 0;
+        }
+
+        .portal-about-brand img {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+        }
+
+        .portal-about-brand h1 {
+            margin: 0;
+            font-size: clamp(1.1rem, 2vw, 1.4rem);
+            color: var(--text-primary);
+        }
+
+        .portal-about-back {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            min-height: 40px;
+            padding: 0 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            background: #fff;
+            text-decoration: none;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .portal-about-main {
+            width: min(920px, calc(100% - 2rem));
+            margin: 2rem auto;
+        }
+
+        .portal-about-content {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: var(--shadow-md);
+            padding: clamp(1.25rem, 4vw, 3rem);
+        }
+
+        .portal-about-icon {
+            width: 56px;
+            height: 56px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: rgba(32, 176, 164, 0.12);
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .portal-about-content h2 {
+            margin: 0 0 1rem;
+            font-size: clamp(1.8rem, 4vw, 2.6rem);
+            color: var(--text-primary);
+            letter-spacing: 0;
+        }
+
+        .portal-about-content p {
+            margin: 0 0 1rem;
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            line-height: 1.8;
+        }
+
+        .apexium-about-card {
+            margin-top: 1.25rem;
+            padding: clamp(1.25rem, 4vw, 2.5rem);
+            border: 1px solid #d7e4f0;
+            border-radius: 14px;
+            background: #fff;
+            box-shadow: var(--shadow-md);
+            text-align: center;
+        }
+
+        .apexium-about-card h2 { margin: 0 0 1.25rem; color: #2865a2; }
+        .apexium-about-card p { margin: 0; color: var(--text-secondary); line-height: 1.85; text-align: justify; }
+        .apexium-mission {
+            display: inline-flex;
+            margin-top: 1.5rem;
+            padding: 0.6rem 1.2rem;
+            border-radius: 999px;
+            color: #2865a2;
+            background: #e8f5f4;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .portal-about-contact {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .portal-about-contact-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            min-width: 0;
+            color: var(--text-secondary);
+            font-weight: 700;
+        }
+
+        .portal-about-contact-item i {
+            color: var(--primary-color);
+            flex: 0 0 auto;
+        }
+
+        .portal-about-contact-item span {
+            overflow-wrap: anywhere;
+        }
+
+        @media (max-width: 640px) {
+            .portal-about-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .portal-about-contact {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="school-theme.css?v=20260924-refined">
+    <script src="school-branding.js?v=20260924"></script>
+</head>
+
+<body>
+    <div class="portal-about-page">
+        <header class="portal-about-header">
+            <div class="portal-about-brand">
+                <img src="images/logo.png" alt="Readers Line Grammer School Jand logo">
+                <h1>Readers Line Grammer School Jand</h1>
+            </div>
+            <a class="portal-about-back" id="portalBackLink" href="student_portal.html">
+                <i data-lucide="arrow-left" width="18"></i>
+                <span>Back</span>
+            </a>
+        </header>
+
+        <main class="portal-about-main">
+            <section class="portal-about-content" aria-labelledby="aboutTitle">
+                <div class="portal-about-icon">
+                    <i data-lucide="info" width="28"></i>
+                </div>
+                <h2 id="aboutTitle">Readers Line Grammer School Jand</h2><p>Playgroup to Grade 8 · Haji Bazar Chowk, Tehsil Road Jand.</p><h3>Our Mission</h3><p>To provide quality education in a safe and disciplined environment while developing students' knowledge, confidence, character, and skills.</p><h3>Our Vision</h3><p>To nurture confident, responsible, and successful individuals who are prepared to contribute positively to society.</p><h3>Director's Message</h3><p>At READERS LINE GRAMMER SCHOOL JAND, we believe every child has the potential to succeed. We are committed to providing quality education, strong values, and a supportive environment for the overall development of our students.</p><div class="portal-about-contact"><h3>Contact our school</h3><p><a href="tel:+923005203469">+92 300 5203469</a> · <a href="https://wa.me/923005203469" target="_blank" rel="noopener">WhatsApp ↗</a></p><p><a href="tel:+923358042250">+92 335 8042250</a> · <a href="https://wa.me/923358042250" target="_blank" rel="noopener">WhatsApp ↗</a></p><p><a href="tel:+923358042251">+92 335 8042251</a> · <a href="https://wa.me/923358042251" target="_blank" rel="noopener">WhatsApp ↗</a></p><a href="website.html#contact">School website &amp; social links ↗</a></div></section>
+            <section class="apexium-about-card" aria-labelledby="apexiumAboutTitle">
+                <h2 id="apexiumAboutTitle">Apexium School System</h2>
+                <p>Apexium School System is dedicated to delivering innovative, reliable, and cost-effective digital solutions. We specialize in software development, web and mobile applications, POS systems, school management systems, retail management systems, and IT services tailored to meet modern business needs. Working as a virtual team allows us to collaborate efficiently, serve clients globally, and provide high-quality solutions with flexibility and speed. At Apexium School System, our mission is to turn ideas into powerful digital products that help businesses grow and succeed in the digital world.</p>
+                <div class="apexium-mission">Our Mission: Turning Ideas into Reality</div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        (function () {
+            let user = null;
+            try {
+                user = JSON.parse(sessionStorage.getItem('loggedInUser') || 'null');
+            } catch (_error) {
+                user = null;
+            }
+
+            if (!user || !sessionStorage.getItem('eduCore_token')) {
+                window.location.replace('/login');
+                return;
+            }
+
+            const backLink = document.getElementById('portalBackLink');
+            if (backLink) {
+                backLink.href = user.role === 'Teacher' ? 'teacher_portal.html' : 'student_portal.html';
+            }
+
+            if (window.lucide) window.lucide.createIcons();
+        })();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Scheduling - Aspire Group of Colleges</title>
+    <link rel="icon" type="image/png" href="images/logo.png">
+    <link rel="stylesheet" href="style.css?v=20260814-centered-school-name">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .schedule-panel {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(170px, 1fr));
+            gap: 1rem;
+            align-items: end;
+        }
+
+        .schedule-grid .input-group {
+            margin-bottom: 0;
+        }
+
+        .schedule-grid .input-group label {
+            display: block;
+            margin-bottom: 0.42rem;
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+        }
+
+        .schedule-grid input,
+        .schedule-grid select {
+            width: 100%;
+            height: 42px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background: #ffffff;
+            color: var(--text-primary);
+            font-size: 0.92rem;
+            padding: 0 0.8rem;
+            outline: none;
+        }
+
+        .schedule-grid input:focus,
+        .schedule-grid select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.14);
+        }
+
+        .schedule-grid .btn {
+            height: 42px;
+            align-self: end;
+        }
+
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 860px;
+        }
+
+        .schedule-table th,
+        .schedule-table td {
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.8rem;
+            text-align: left;
+        }
+
+        .schedule-table th {
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+        }
+
+        .empty-note {
+            padding: 1rem;
+            border: 1px dashed var(--border-color);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            background: #f8fafc;
+        }
+
+        .schedule-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            flex-wrap: wrap;
+        }
+
+        .schedule-action-btn {
+            min-height: 34px;
+            border: 0;
+            border-radius: 8px;
+            padding: 0.45rem 0.7rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .schedule-action-btn.edit {
+            background: #f1e8f7;
+            color: #43206f;
+        }
+
+        .schedule-action-btn.delete {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .schedule-table-wrap {
+            overflow-x: auto;
+        }
+
+        .schedule-filter-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(170px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .schedule-filter-grid label {
+            display: block;
+            margin-bottom: 0.35rem;
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+        }
+
+        .schedule-filter-grid select {
+            width: 100%;
+            height: 38px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background: #fff;
+            color: var(--text-primary);
+            padding: 0 0.7rem;
+            font: inherit;
+        }
+
+        @media (max-width: 1100px) {
+            .schedule-grid {
+                grid-template-columns: repeat(2, minmax(170px, 1fr));
+            }
+        }
+
+        @media (max-width: 640px) {
+            .schedule-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .schedule-filter-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="school-theme.css?v=20261002-dashboard-cards-125">
+    <script src="school-branding.js?v=20260924"></script>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="logo-section">
+                <img class="sidebar-logo-img" src="images/logo.png" alt="Aspire Group of Colleges logo">
+            </div>
+            <nav class="nav-links">
+                <a href="dashboard.html" class="nav-item"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
+                <a href="students.html" class="nav-item"><i data-lucide="users"></i><span>Students</span></a>
+                <a href="teachers.html" class="nav-item"><i data-lucide="book-open"></i><span>Teachers</span></a>
+                <a href="staff.html" class="nav-item"><i data-lucide="briefcase"></i><span>Staff</span></a>
+                <a href="classes.html" class="nav-item"><i data-lucide="school"></i><span>Classes</span></a>
+                <a href="fees.html" class="nav-item"><i data-lucide="credit-card"></i><span>Fees</span></a>
+                <a href="fee_challan.html" class="nav-item"><i data-lucide="file-text"></i><span>Fee Challan</span></a>
+                <a href="teacher_salaries.html" class="nav-item"><i data-lucide="wallet"></i><span>Salaries</span></a>
+                <a href="exams.html" class="nav-item"><i data-lucide="clipboard-list"></i><span>Exams</span></a>
+                <a href="revenue.html" class="nav-item"><i data-lucide="trending-up"></i><span>Revenue</span></a>
+                <a href="permissions.html" class="nav-item"><i data-lucide="shield"></i><span>Permissions</span></a>
+                <a href="aboutme.html" class="nav-item"><i data-lucide="info"></i><span>About Us</span></a>
+                <a href="#" class="nav-item" onclick="logoutUser(event)"><i data-lucide="log-out"></i><span>Logout</span></a>
+            </nav>
+            <a href="settings.html" class="user-profile">
+                <div class="avatar">AD</div>
+                <div class="user-info"><h4>Admin User</h4><p>Principal</p></div>
+            </a>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <div>
+                    <h1 id="teacherScheduleHeading">Teacher Scheduling</h1>
+                    <p id="teacherScheduleDescription" style="color: var(--text-secondary); margin-top: 0.3rem;">Assign each teacher lecture by class, section, day, and time.</p>
+                </div>
+            </header>
+
+            <section class="schedule-panel">
+                <form id="teacherSchedulePageForm">
+                    <input type="hidden" id="teacherScheduleEditId">
+                    <div class="schedule-grid">
+                        <div class="input-group">
+                            <label>Teacher</label>
+                            <select id="teacherScheduleTeacher" required></select>
+                        </div>
+                        <div class="input-group">
+                            <label>Class</label>
+                            <select id="teacherScheduleClass" required onchange="populateTeacherTimetableSectionOptions()"></select>
+                        </div>
+                        <div class="input-group">
+                            <label>Section</label>
+                            <select id="teacherScheduleSection" required disabled>
+                                <option value="">Select Class First</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Day</label>
+                            <select id="teacherScheduleDay" required>
+                                <option value="Monday">Monday</option>
+                                <option value="Tuesday">Tuesday</option>
+                                <option value="Wednesday">Wednesday</option>
+                                <option value="Thursday">Thursday</option>
+                                <option value="Friday">Friday</option>
+                                <option value="Saturday">Saturday</option>
+                                <option value="Sunday">Sunday</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Lecture / Subject</label>
+                            <select id="teacherScheduleSubject" required>
+                                <option value="">Select Subject</option>
+                                <option>English</option><option>Urdu</option><option>Mathematics</option><option>Science</option>
+                                <option>Social Study</option><option>Islamiyat</option><option>Nazra</option><option>Math</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Start Time</label>
+                            <input type="time" id="teacherScheduleStart" required>
+                        </div>
+                        <div class="input-group">
+                            <label>End Time</label>
+                            <input type="time" id="teacherScheduleEnd" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Room</label>
+                            <input type="text" id="teacherScheduleRoom" placeholder="Room">
+                        </div>
+                        <div class="input-group">
+                            <label>Note</label>
+                            <input type="text" id="teacherScheduleNote" placeholder="Optional note">
+                        </div>
+                        <button type="submit" class="btn btn-primary"><i data-lucide="save"></i> Save Schedule</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="schedule-panel">
+                <h3 style="margin-bottom:1rem;">Teacher Timetable</h3>
+                <div class="schedule-filter-grid">
+                    <div>
+                        <label for="teacherTimetableFilterTeacher">Teacher</label>
+                        <select id="teacherTimetableFilterTeacher"></select>
+                    </div>
+                    <div>
+                        <label for="teacherTimetableFilterClass">Class</label>
+                        <select id="teacherTimetableFilterClass"></select>
+                    </div>
+                    <div>
+                        <label for="teacherTimetableFilterSection">Section</label>
+                        <select id="teacherTimetableFilterSection"></select>
+                    </div>
+                </div>
+                <div id="teacherSchedulePageList"></div>
+            </section>
+        </main>
+    </div>
+
+    <div id="successModal" class="success-overlay">
+        <div class="success-modal">
+            <div class="success-icon-wrap"><i data-lucide="check-circle"></i></div>
+            <h2 id="successTitle">Success!</h2>
+            <p id="successMessage" style="color: var(--text-secondary); margin: 1rem 0 2rem;"></p>
+            <button class="btn btn-primary" style="width: 100%;" onclick="closeSuccessModal()">Great!</button>
+        </div>
+    </div>
+
+    <script src="auth.js?v=20261002-sidebar-facility-nav1"></script>
+    <script src="script.js?v=20261002-sidebar-facility-nav1"></script>
+    <script>
+        function getScheduleData(key) {
+            try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch (_error) { return []; }
+        }
+
+        function setScheduleData(key, data) {
+            localStorage.setItem(key, JSON.stringify(data));
+        }
+
+        function applyTeacherScheduleMode() {
+            const assignedLectureMode = window.location.hash === '#assigned-lectures';
+            document.getElementById('teacherScheduleHeading').textContent = assignedLectureMode ? 'Assigned Lectures' : 'Teacher Scheduling';
+            document.getElementById('teacherScheduleDescription').textContent = assignedLectureMode
+                ? 'Assign an additional lecture to a teacher by class, section, day, subject, and time.'
+                : 'Assign each teacher lecture by class, section, day, and time.';
+        }
+
+        function parseSchedule(rawSchedule) {
+            if (Array.isArray(rawSchedule)) return rawSchedule;
+            if (!rawSchedule) return [];
+            try {
+                const parsed = JSON.parse(rawSchedule);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (_error) {
+                return [];
+            }
+        }
+
+        const DEFAULT_TIMETABLE_CLASSES = [
+            'Play Group', 'Nursarry', 'Prep',
+            'Class One', 'Class Two', 'Class Three', 'Class Four', 'Class Five',
+            'Class Six', 'Class Seven', 'Class Eight', 'Class Nine', 'Class Ten', 'Graduate'
+        ];
+
+        function escapeTimetableText(value) {
+            return String(value ?? '').replace(/[&<>"']/g, (character) => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[character]));
+        }
+
+        function splitTimetableClassSection(classGrade = '', section = '') {
+            const suppliedSection = String(section || '').trim();
+            const rawClass = String(classGrade || '').trim();
+            const combinedMatch = rawClass.match(/^(.*?)\s*\(([^()]+)\)\s*$/);
+            return {
+                classGrade: String(combinedMatch ? combinedMatch[1] : rawClass).trim(),
+                section: suppliedSection || String(combinedMatch?.[2] || '').trim()
+            };
+        }
+
+        function formatTimetableClassSection(classGrade = '', section = '') {
+            const normalized = splitTimetableClassSection(classGrade, section);
+            if (!normalized.classGrade) return '-';
+            return normalized.section && normalized.section.toLowerCase() !== 'general'
+                ? `${normalized.classGrade} - Section ${normalized.section}`
+                : `${normalized.classGrade} - General`;
+        }
+
+        function getTimetableClassSectionCatalog() {
+            const catalog = new Map();
+            const addPair = (classGrade, section = '') => {
+                const normalized = splitTimetableClassSection(classGrade, section);
+                if (!normalized.classGrade) return;
+                const key = normalized.classGrade.toLowerCase();
+                if (!catalog.has(key)) catalog.set(key, { name: normalized.classGrade, sections: new Map() });
+                if (normalized.section) catalog.get(key).sections.set(normalized.section.toLowerCase(), normalized.section);
+            };
+
+            DEFAULT_TIMETABLE_CLASSES.forEach((classGrade) => addPair(classGrade));
+            getScheduleData('eduCore_classes').forEach((item) => addPair(item?.name || item?.classGrade, item?.section));
+            getScheduleData('eduCore_students').forEach((student) => addPair(student?.classGrade, student?.section));
+            getScheduleData('eduCore_teachers').forEach((teacher) => {
+                parseSchedule(teacher?.schedule).forEach((item) => addPair(item?.classGrade || item?.class || item?.className, item?.section));
+            });
+            getScheduleData('eduCore_teacher_class_assignments').forEach((assignment) => {
+                addPair(assignment?.classGrade || assignment?.className, assignment?.section);
+            });
+
+            return [...catalog.values()]
+                .map((item) => ({
+                    name: item.name,
+                    sections: [...item.sections.values()].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }))
+                }))
+                .sort((a, b) => typeof compareStudentClassNames === 'function'
+                    ? compareStudentClassNames(a.name, b.name)
+                    : a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+        }
+
+        function populateTeacherTimetableSectionOptions(selectedSection = '') {
+            const classSelect = document.getElementById('teacherScheduleClass');
+            const sectionSelect = document.getElementById('teacherScheduleSection');
+            const classGrade = splitTimetableClassSection(classSelect?.value).classGrade;
+            if (!classGrade) {
+                sectionSelect.disabled = true;
+                sectionSelect.innerHTML = '<option value="">Select Class First</option>';
+                return;
+            }
+
+            const sections = getTimetableClassSectionCatalog()
+                .find((item) => item.name.toLowerCase() === classGrade.toLowerCase())?.sections || [];
+            const availableSections = sections.length ? [...sections] : ['General'];
+            const selected = String(selectedSection || '').trim();
+            if (selected && !availableSections.some((section) => section.toLowerCase() === selected.toLowerCase())) {
+                availableSections.push(selected);
+            }
+            sectionSelect.disabled = false;
+            sectionSelect.innerHTML = availableSections.map((section) => (
+                `<option value="${escapeTimetableText(section)}">${escapeTimetableText(section)}</option>`
+            )).join('');
+            sectionSelect.value = selected || availableSections[0] || '';
+        }
+
+        function populateTeacherTimetableFilterSectionOptions(selectedSection = '') {
+            const classFilter = document.getElementById('teacherTimetableFilterClass');
+            const sectionFilter = document.getElementById('teacherTimetableFilterSection');
+            if (!classFilter || !sectionFilter) return;
+
+            const selectedClass = splitTimetableClassSection(classFilter.value).classGrade;
+            const catalog = getTimetableClassSectionCatalog();
+            const selectedClassEntry = catalog.find((item) => item.name.toLowerCase() === selectedClass.toLowerCase());
+            const sections = selectedClass
+                ? (selectedClassEntry?.sections || [])
+                : catalog.flatMap((item) => item.sections);
+            const uniqueSections = [...new Map(sections.map((section) => [section.toLowerCase(), section])).values()]
+                .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+            if ((!selectedClass && catalog.some((item) => !item.sections.length)) || (selectedClass && !selectedClassEntry?.sections.length)) {
+                uniqueSections.unshift('General');
+            }
+            const selected = String(selectedSection || '').trim();
+            if (selected && !uniqueSections.some((section) => section.toLowerCase() === selected.toLowerCase())) {
+                uniqueSections.push(selected);
+            }
+            sectionFilter.innerHTML = '<option value="">All Sections</option>' + uniqueSections.map((section) => (
+                `<option value="${escapeTimetableText(section)}">Section ${escapeTimetableText(section)}</option>`
+            )).join('');
+            sectionFilter.value = selected;
+        }
+
+        function populateTeacherTimetableFilters() {
+            const teacherFilter = document.getElementById('teacherTimetableFilterTeacher');
+            const classFilter = document.getElementById('teacherTimetableFilterClass');
+            const sectionFilter = document.getElementById('teacherTimetableFilterSection');
+            if (!teacherFilter || !classFilter || !sectionFilter) return;
+
+            const selectedTeacher = teacherFilter.value;
+            const selectedClass = splitTimetableClassSection(classFilter.value).classGrade;
+            const selectedSection = sectionFilter.value;
+            const teachers = getScheduleData('eduCore_teachers');
+            const classes = getTimetableClassSectionCatalog();
+            teacherFilter.innerHTML = '<option value="">All Teachers</option>' + teachers.map((teacher) => (
+                `<option value="${escapeTimetableText(teacher.id)}">${escapeTimetableText(teacher.fullName || 'Teacher')}</option>`
+            )).join('');
+            classFilter.innerHTML = '<option value="">All Classes</option>' + classes.map((item) => (
+                `<option value="${escapeTimetableText(item.name)}">${escapeTimetableText(item.name)}</option>`
+            )).join('');
+            teacherFilter.value = selectedTeacher;
+            classFilter.value = selectedClass;
+            populateTeacherTimetableFilterSectionOptions(selectedSection);
+        }
+
+        function populateTeacherSchedulingOptions(selectedClass = '', selectedSection = '') {
+            const teacherSelect = document.getElementById('teacherScheduleTeacher');
+            const classSelect = document.getElementById('teacherScheduleClass');
+            const teachers = getScheduleData('eduCore_teachers');
+            const classes = getTimetableClassSectionCatalog();
+            const normalizedClass = splitTimetableClassSection(selectedClass, selectedSection).classGrade;
+
+            teacherSelect.innerHTML = '<option value="">Select Teacher</option>' + teachers.map((teacher) => `<option value="${escapeTimetableText(teacher.id)}">${escapeTimetableText(teacher.fullName || 'Teacher')}${teacher.subject ? ` - ${escapeTimetableText(teacher.subject)}` : ''}</option>`).join('');
+            classSelect.innerHTML = '<option value="">Select Class</option>' + classes.map((item) => `<option value="${escapeTimetableText(item.name)}">${escapeTimetableText(item.name)}</option>`).join('');
+            classSelect.value = normalizedClass;
+            if (normalizedClass && classSelect.value !== normalizedClass) {
+                classSelect.insertAdjacentHTML('beforeend', `<option value="${escapeTimetableText(normalizedClass)}">${escapeTimetableText(normalizedClass)}</option>`);
+                classSelect.value = normalizedClass;
+            }
+            populateTeacherTimetableSectionOptions(selectedSection || splitTimetableClassSection(selectedClass).section);
+            const subjectSelect = document.getElementById('teacherScheduleSubject');
+            if (subjectSelect) subjectSelect.innerHTML = '<option value="">Select Subject</option>' + ['English', 'Urdu', 'Mathematics', 'Science', 'Social Study', 'Islamiyat', 'Nazra', 'Math'].map((subject) => `<option value="${subject}">${subject}</option>`).join('');
+        }
+
+        function getAllTeacherScheduleRows() {
+            return getScheduleData('eduCore_teachers').flatMap((teacher) => {
+                return parseSchedule(teacher.schedule).map((item) => ({
+                    ...item,
+                    teacherId: teacher.id,
+                    teacherName: teacher.fullName || 'Teacher'
+                }));
+            });
+        }
+
+        function renderTeacherSchedules() {
+            const list = document.getElementById('teacherSchedulePageList');
+            populateTeacherTimetableFilters();
+            const selectedTeacher = document.getElementById('teacherTimetableFilterTeacher')?.value || '';
+            const selectedClass = splitTimetableClassSection(document.getElementById('teacherTimetableFilterClass')?.value).classGrade.toLowerCase();
+            const selectedSection = String(document.getElementById('teacherTimetableFilterSection')?.value || '').toLowerCase();
+            const rows = getAllTeacherScheduleRows()
+                .filter((item) => {
+                    const normalized = splitTimetableClassSection(item.classGrade, item.section);
+                    return (!selectedTeacher || String(item.teacherId) === String(selectedTeacher)) &&
+                        (!selectedClass || normalized.classGrade.toLowerCase() === selectedClass) &&
+                        (!selectedSection || String(normalized.section || 'General').toLowerCase() === selectedSection);
+                })
+                .sort((a, b) => `${a.teacherName}${a.day}${a.startTime}`.localeCompare(`${b.teacherName}${b.day}${b.startTime}`));
+            if (!rows.length) {
+                list.innerHTML = '<div class="empty-note">No teacher schedules added yet.</div>';
+                return;
+            }
+
+            list.innerHTML = `
+                <div class="schedule-table-wrap">
+                <table class="schedule-table">
+                    <thead><tr><th>Teacher</th><th>Class</th><th>Section</th><th>Day</th><th>Lecture</th><th>Time</th><th>Room</th><th>Action</th></tr></thead>
+                    <tbody>
+                        ${rows.map((item) => `
+                            <tr>
+                                <td>${escapeTimetableText(item.teacherName || '-')}</td>
+                                <td>${escapeTimetableText(splitTimetableClassSection(item.classGrade, item.section).classGrade || '-')}</td>
+                                <td>${escapeTimetableText(splitTimetableClassSection(item.classGrade, item.section).section || 'General')}</td>
+                                <td>${escapeTimetableText(item.day || '-')}</td>
+                                <td>${escapeTimetableText(item.subject || '-')}</td>
+                                <td>${escapeTimetableText(item.startTime || '-')} - ${escapeTimetableText(item.endTime || '-')}</td>
+                                <td>${escapeTimetableText(item.room || '-')}</td>
+                                <td>
+                                    <div class="schedule-actions">
+                                        <button class="schedule-action-btn edit" onclick="editTeacherScheduleRow('${item.teacherId}', '${item.id}')"><i data-lucide="edit-2" width="14"></i> Edit</button>
+                                        <button class="schedule-action-btn delete" onclick="deleteTeacherScheduleRow('${item.teacherId}', '${item.id}')"><i data-lucide="trash-2" width="14"></i> Delete</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                </div>
+            `;
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        async function saveTeachers(teachers, teacherToSync = null) {
+            setScheduleData('eduCore_teachers', teachers);
+            if (typeof syncToSQLDetailed !== 'function') return { success: true };
+            const result = await syncToSQLDetailed('teachers', teacherToSync ? [teacherToSync] : teachers);
+            if (!result.success) {
+                showAppAlert(result.error || 'Schedule saved locally, but database sync failed.', 'Sync Failed');
+            }
+            return result;
+        }
+
+        async function deleteTeacherScheduleRow(teacherId, scheduleId) {
+            const teachers = getScheduleData('eduCore_teachers');
+            const teacher = teachers.find((item) => String(item.id) === String(teacherId));
+            if (!teacher) return;
+            teacher.schedule = parseSchedule(teacher.schedule).filter((item) => item.id !== scheduleId);
+            await saveTeachers(teachers, teacher);
+            populateTeacherSchedulingOptions();
+            renderTeacherSchedules();
+        }
+
+        function editTeacherScheduleRow(teacherId, scheduleId) {
+            const teachers = getScheduleData('eduCore_teachers');
+            const teacher = teachers.find((item) => String(item.id) === String(teacherId));
+            if (!teacher) return;
+
+            const schedule = parseSchedule(teacher.schedule).find((item) => item.id === scheduleId);
+            if (!schedule) return;
+
+            const normalized = splitTimetableClassSection(schedule.classGrade, schedule.section);
+            document.getElementById('teacherScheduleEditId').value = schedule.id;
+            populateTeacherSchedulingOptions(normalized.classGrade, normalized.section);
+            document.getElementById('teacherScheduleTeacher').value = teacher.id;
+            document.getElementById('teacherScheduleDay').value = schedule.day || 'Monday';
+            document.getElementById('teacherScheduleSubject').value = schedule.subject || '';
+            document.getElementById('teacherScheduleStart').value = schedule.startTime || '';
+            document.getElementById('teacherScheduleEnd').value = schedule.endTime || '';
+            document.getElementById('teacherScheduleRoom').value = schedule.room || '';
+            document.getElementById('teacherScheduleNote').value = schedule.note || '';
+            document.querySelector('#teacherSchedulePageForm button[type="submit"]').innerHTML = '<i data-lucide="save"></i> Update Schedule';
+            document.getElementById('teacherSchedulePageForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        document.getElementById('teacherSchedulePageForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const teachers = getScheduleData('eduCore_teachers');
+            const teacherId = document.getElementById('teacherScheduleTeacher').value;
+            const editId = document.getElementById('teacherScheduleEditId').value;
+            const teacher = teachers.find((item) => String(item.id) === String(teacherId));
+            if (!teacher) {
+                showAppAlert('Select a teacher first.', 'Missing Teacher');
+                return;
+            }
+
+            const schedule = {
+                id: editId || `SCH-${Date.now()}`,
+                classGrade: document.getElementById('teacherScheduleClass').value,
+                section: document.getElementById('teacherScheduleSection').value,
+                day: document.getElementById('teacherScheduleDay').value,
+                subject: document.getElementById('teacherScheduleSubject').value.trim(),
+                startTime: document.getElementById('teacherScheduleStart').value,
+                endTime: document.getElementById('teacherScheduleEnd').value,
+                room: document.getElementById('teacherScheduleRoom').value.trim(),
+                note: document.getElementById('teacherScheduleNote').value.trim()
+            };
+            if (!schedule.classGrade || !schedule.section || !schedule.subject || !schedule.startTime || !schedule.endTime) {
+                showAppAlert('Class, section, lecture, start time, and end time are required.', 'Missing Schedule');
+                return;
+            }
+            if (schedule.startTime >= schedule.endTime) {
+                showAppAlert('End time must be after start time.', 'Invalid Time');
+                return;
+            }
+
+            const scheduleRows = parseSchedule(teacher.schedule);
+            const existingIndex = scheduleRows.findIndex((item) => item.id === editId);
+            if (existingIndex >= 0) {
+                scheduleRows[existingIndex] = schedule;
+            } else {
+                scheduleRows.push(schedule);
+            }
+            teacher.schedule = scheduleRows;
+            await saveTeachers(teachers, teacher);
+            event.target.reset();
+            document.getElementById('teacherScheduleEditId').value = '';
+            document.querySelector('#teacherSchedulePageForm button[type="submit"]').innerHTML = '<i data-lucide="save"></i> Save Schedule';
+            populateTeacherSchedulingOptions();
+            renderTeacherSchedules();
+            showSuccessModal(editId ? 'Schedule Updated!' : 'Schedule Saved!', editId ? 'Teacher schedule has been updated successfully.' : 'Teacher schedule has been saved successfully.');
+        });
+
+        populateTeacherSchedulingOptions();
+        applyTeacherScheduleMode();
+        renderTeacherSchedules();
+        document.getElementById('teacherTimetableFilterTeacher').addEventListener('change', renderTeacherSchedules);
+        document.getElementById('teacherTimetableFilterClass').addEventListener('change', () => {
+            populateTeacherTimetableFilterSectionOptions();
+            renderTeacherSchedules();
+        });
+        document.getElementById('teacherTimetableFilterSection').addEventListener('change', renderTeacherSchedules);
+        window.addEventListener('hashchange', applyTeacherScheduleMode);
+        if (window.lucide) window.lucide.createIcons();
+    </script>
+</body>
+
+</html>

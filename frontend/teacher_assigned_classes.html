@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assigned Classes - Aspire Group of Colleges</title>
+    <link rel="icon" type="image/png" href="images/logo.png">
+    <link rel="stylesheet" href="style.css?v=20260814-centered-school-name">
+    <link rel="stylesheet" href="student_schedule_theme.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .class-assignment-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 0.85rem;
+            align-items: end;
+        }
+
+        .class-assignment-grid label {
+            display: block;
+            color: #334155;
+            font-size: 0.8rem;
+            font-weight: 800;
+            margin-bottom: 0.35rem;
+        }
+
+        .class-assignment-grid input,
+        .class-assignment-grid select {
+            width: 100%;
+            min-height: 38px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            background: #fff;
+            color: #0f172a;
+            padding: 0.42rem 0.62rem;
+            font: inherit;
+        }
+
+        .assignment-table {
+            width: 100%;
+            min-width: 820px;
+            border-collapse: collapse;
+        }
+
+        .assignment-table th,
+        .assignment-table td {
+            padding: 0.68rem;
+            border-bottom: 1px solid #dbecea;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        .assignment-table th {
+            background: #f6fbfa;
+            color: #475569;
+            font-size: 0.76rem;
+            text-transform: uppercase;
+        }
+
+        .assignment-actions {
+            display: inline-flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+        }
+    </style>
+    <link rel="stylesheet" href="school-theme.css?v=20260924-refined">
+    <script src="school-branding.js?v=20260924"></script>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="logo-section">
+                <img class="sidebar-logo-img" src="images/logo.png" alt="Aspire Group of Colleges logo">
+            </div>
+            <nav class="nav-links"></nav>
+            <a href="settings.html" class="user-profile">
+                <div class="avatar">AD</div>
+                <div class="user-info"><h4>Admin User</h4><p>Principal</p></div>
+            </a>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <div>
+                    <h1>Assigned Classes</h1>
+                    <p style="color: var(--text-secondary); margin-top: 0.3rem;">Assign a teacher as class incharge for a specific section.</p>
+                </div>
+            </header>
+
+            <section class="schedule-panel">
+                <div class="schedule-section-title">
+                    <h3>Class Incharge Assignment</h3>
+                    <a class="schedule-back-link" href="teacher_scheduling.html"><i data-lucide="arrow-left"></i> Back</a>
+                </div>
+                <form id="classAssignmentForm">
+                    <input type="hidden" id="classAssignmentEditId">
+                    <div class="class-assignment-grid">
+                        <div>
+                            <label for="classAssignmentTeacher">Teacher</label>
+                            <select id="classAssignmentTeacher" required></select>
+                        </div>
+                        <div>
+                            <label for="classAssignmentClass">Class</label>
+                            <select id="classAssignmentClass" required></select>
+                        </div>
+                        <div>
+                            <label for="classAssignmentSection">Section</label>
+                            <select id="classAssignmentSection" required disabled>
+                                <option value="">Select Class First</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="classAssignmentCampus">Campus</label>
+                            <select id="classAssignmentCampus" required>
+                                <option value="">Loading campuses...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="classAssignmentNote">Note</label>
+                            <input type="text" id="classAssignmentNote" placeholder="Optional note">
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="saveClassAssignmentBtn"><i data-lucide="save"></i> Save Assignment</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="schedule-panel">
+                <h3 style="margin-bottom: 1rem;">Class Incharges</h3>
+                <div class="schedule-table-wrap" id="classAssignmentList"></div>
+            </section>
+        </main>
+    </div>
+
+    <script src="auth.js?v=20260814-live-auth-fix1"></script>
+    <script src="script.js?v=20260926-assignment-campus-dropdown"></script>
+    <script>
+        const CLASS_ASSIGNMENT_KEY = 'eduCore_teacher_class_assignments';
+        const classAssignmentCampusSelect = document.getElementById('classAssignmentCampus');
+        const DEFAULT_ASSIGNMENT_CLASSES = [
+            'Play Group', 'Nursarry', 'Prep',
+            'Class One', 'Class Two', 'Class Three', 'Class Four', 'Class Five',
+            'Class Six', 'Class Seven', 'Class Eight', 'Class Nine', 'Class Ten', 'Graduate'
+        ];
+
+        function assignmentData(key) {
+            try {
+                const stored = JSON.parse(localStorage.getItem(key) || '[]');
+                return Array.isArray(stored) ? stored : [];
+            } catch (_error) {
+                return [];
+            }
+        }
+
+        function saveAssignments(assignments) {
+            localStorage.setItem(CLASS_ASSIGNMENT_KEY, JSON.stringify(assignments));
+        }
+
+        async function populateClassAssignmentCampuses(selectedCampus = '') {
+            const registered = typeof loadRegisteredCampusNames === 'function'
+                ? await loadRegisteredCampusNames()
+                : ['Main Campus'];
+            const campuses = [...new Map(registered.map((name) => {
+                const value = String(name || '').trim();
+                return [value.toLowerCase(), value];
+            }).filter(([key, value]) => key && value)).values()];
+            const selected = String(selectedCampus || classAssignmentCampusSelect.value || '').trim();
+            classAssignmentCampusSelect.innerHTML = '<option value="">Select Campus</option>' + campuses
+                .map((campus) => `<option value="${escapeAssignmentText(campus)}">${escapeAssignmentText(campus)}</option>`).join('');
+            if (selected && !campuses.some((campus) => campus.toLowerCase() === selected.toLowerCase())) {
+                classAssignmentCampusSelect.insertAdjacentHTML('beforeend', `<option value="${escapeAssignmentText(selected)}">${escapeAssignmentText(selected)}</option>`);
+            }
+            classAssignmentCampusSelect.value = selected;
+        }
+
+        function escapeAssignmentText(value) {
+            return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[char]));
+        }
+
+        function splitAssignmentClassSection(classGrade = '', section = '') {
+            const suppliedSection = String(section || '').trim();
+            const rawClass = String(classGrade || '').trim();
+            const combinedMatch = rawClass.match(/^(.*?)\s*\(([^()]+)\)\s*$/);
+            return {
+                classGrade: String(combinedMatch ? combinedMatch[1] : rawClass).trim(),
+                section: suppliedSection || String(combinedMatch?.[2] || '').trim()
+            };
+        }
+
+        function formatAssignmentClassSection(classGrade = '', section = '') {
+            const normalized = splitAssignmentClassSection(classGrade, section);
+            if (!normalized.classGrade) return '-';
+            return normalized.section && normalized.section.toLowerCase() !== 'general'
+                ? `${normalized.classGrade} - Section ${normalized.section}`
+                : `${normalized.classGrade} - General`;
+        }
+
+        function collectClassSectionCatalog() {
+            const classes = assignmentData('eduCore_classes');
+            const students = assignmentData('eduCore_students');
+            const assignments = assignmentData(CLASS_ASSIGNMENT_KEY);
+            const catalog = new Map();
+            const addPair = (classGrade, section = '') => {
+                const normalized = splitAssignmentClassSection(classGrade, section);
+                if (!normalized.classGrade) return;
+                const key = normalized.classGrade.toLowerCase();
+                if (!catalog.has(key)) catalog.set(key, { name: normalized.classGrade, sections: new Map() });
+                if (normalized.section) catalog.get(key).sections.set(normalized.section.toLowerCase(), normalized.section);
+            };
+
+            DEFAULT_ASSIGNMENT_CLASSES.forEach((classGrade) => addPair(classGrade));
+            classes.forEach((item) => addPair(item?.name || item?.classGrade, item?.section));
+            students.forEach((student) => addPair(student?.classGrade, student?.section));
+            assignments.forEach((assignment) => addPair(assignment?.classGrade, assignment?.section));
+
+            return [...catalog.values()]
+                .map((item) => ({
+                    name: item.name,
+                    sections: [...item.sections.values()].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }))
+                }))
+                .sort((a, b) => typeof compareStudentClassNames === 'function'
+                    ? compareStudentClassNames(a.name, b.name)
+                    : a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+        }
+
+        function populateClassAssignmentSectionOptions(selectedSection = '') {
+            const classGrade = splitAssignmentClassSection(classAssignmentClass.value).classGrade;
+            if (!classGrade) {
+                classAssignmentSection.disabled = true;
+                classAssignmentSection.innerHTML = '<option value="">Select Class First</option>';
+                return;
+            }
+
+            const sections = collectClassSectionCatalog()
+                .find((item) => item.name.toLowerCase() === classGrade.toLowerCase())?.sections || [];
+            const availableSections = sections.length ? [...sections] : ['General'];
+            const selected = String(selectedSection || '').trim();
+            if (selected && !availableSections.some((section) => section.toLowerCase() === selected.toLowerCase())) {
+                availableSections.push(selected);
+            }
+            classAssignmentSection.disabled = false;
+            classAssignmentSection.innerHTML = availableSections.map((section) => (
+                `<option value="${escapeAssignmentText(section)}">${escapeAssignmentText(section)}</option>`
+            )).join('');
+            classAssignmentSection.value = selected || availableSections[0] || '';
+        }
+
+        function populateClassAssignmentOptions(selectedClass = '', selectedSection = '') {
+            const teachers = assignmentData('eduCore_teachers');
+            const classes = collectClassSectionCatalog();
+            const normalizedClass = splitAssignmentClassSection(selectedClass, selectedSection).classGrade;
+            classAssignmentTeacher.innerHTML = '<option value="">Select Teacher</option>' + teachers.map((teacher) => (
+                `<option value="${escapeAssignmentText(teacher.id)}">${escapeAssignmentText(teacher.fullName || 'Teacher')}${teacher.subject ? ` - ${escapeAssignmentText(teacher.subject)}` : ''}</option>`
+            )).join('');
+            classAssignmentClass.innerHTML = '<option value="">Select Class</option>' + classes.map((item) => (
+                `<option value="${escapeAssignmentText(item.name)}">${escapeAssignmentText(item.name)}</option>`
+            )).join('');
+            classAssignmentClass.value = normalizedClass;
+            if (normalizedClass && classAssignmentClass.value !== normalizedClass) {
+                classAssignmentClass.insertAdjacentHTML('beforeend', `<option value="${escapeAssignmentText(normalizedClass)}">${escapeAssignmentText(normalizedClass)}</option>`);
+                classAssignmentClass.value = normalizedClass;
+            }
+            populateClassAssignmentSectionOptions(selectedSection || splitAssignmentClassSection(selectedClass).section);
+        }
+
+        function assignmentTeacherName(teacherId) {
+            return assignmentData('eduCore_teachers').find((teacher) => String(teacher.id) === String(teacherId))?.fullName || 'Teacher';
+        }
+
+        function renderClassAssignments() {
+            const list = document.getElementById('classAssignmentList');
+            const assignments = assignmentData(CLASS_ASSIGNMENT_KEY)
+                .sort((a, b) => `${a.classGrade || ''}${a.section || ''}${a.teacherName || ''}`.localeCompare(`${b.classGrade || ''}${b.section || ''}${b.teacherName || ''}`));
+            if (!assignments.length) {
+                list.innerHTML = '<div class="empty-note">No class incharge assignment has been added yet.</div>';
+                return;
+            }
+
+            list.innerHTML = `
+                <table class="assignment-table">
+                    <thead><tr><th>Class</th><th>Section</th><th>Class Incharge</th><th>Campus</th><th>Note</th><th>Action</th></tr></thead>
+                    <tbody>
+                        ${assignments.map((assignment) => `
+                            <tr>
+                                <td>${escapeAssignmentText(splitAssignmentClassSection(assignment.classGrade, assignment.section).classGrade || '-')}</td>
+                                <td>${escapeAssignmentText(splitAssignmentClassSection(assignment.classGrade, assignment.section).section || 'General')}</td>
+                                <td>${escapeAssignmentText(assignment.teacherName || assignmentTeacherName(assignment.teacherId))}</td>
+                                <td>${escapeAssignmentText(assignment.campusName || 'Main Campus')}</td>
+                                <td>${escapeAssignmentText(assignment.note || '-')}</td>
+                                <td>
+                                    <div class="assignment-actions">
+                                        <button type="button" class="schedule-action-btn edit" onclick="editClassAssignment('${escapeAssignmentText(assignment.id)}')"><i data-lucide="edit-2"></i> Edit</button>
+                                        <button type="button" class="schedule-action-btn delete" onclick="deleteClassAssignment('${escapeAssignmentText(assignment.id)}')"><i data-lucide="trash-2"></i> Delete</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        function resetClassAssignmentForm() {
+            classAssignmentForm.reset();
+            classAssignmentEditId.value = '';
+            populateClassAssignmentOptions();
+            saveClassAssignmentBtn.innerHTML = '<i data-lucide="save"></i> Save Assignment';
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        async function editClassAssignment(id) {
+            const assignment = assignmentData(CLASS_ASSIGNMENT_KEY).find((item) => String(item.id) === String(id));
+            if (!assignment) return;
+            const normalized = splitAssignmentClassSection(assignment.classGrade, assignment.section);
+            classAssignmentEditId.value = assignment.id;
+            classAssignmentTeacher.value = assignment.teacherId || '';
+            populateClassAssignmentOptions(normalized.classGrade, normalized.section);
+            classAssignmentTeacher.value = assignment.teacherId || '';
+            await populateClassAssignmentCampuses(assignment.campusName || assignmentData('eduCore_teachers').find((teacher) => String(teacher.id) === String(assignment.teacherId))?.campusName || '');
+            classAssignmentNote.value = assignment.note || '';
+            saveClassAssignmentBtn.innerHTML = '<i data-lucide="save"></i> Update Assignment';
+            classAssignmentForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        function deleteClassAssignment(id) {
+            saveAssignments(assignmentData(CLASS_ASSIGNMENT_KEY).filter((item) => String(item.id) !== String(id)));
+            renderClassAssignments();
+        }
+
+        classAssignmentForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const teachers = assignmentData('eduCore_teachers');
+            const teacher = teachers.find((item) => String(item.id) === String(classAssignmentTeacher.value));
+            const classGrade = classAssignmentClass.value;
+            const section = classAssignmentSection.value;
+            if (!teacher || !classGrade || !section || !classAssignmentCampusSelect.value) {
+                showAppAlert('Select a teacher, class, section, and campus first.', 'Missing Assignment');
+                return;
+            }
+
+            const assignments = assignmentData(CLASS_ASSIGNMENT_KEY);
+            const editId = classAssignmentEditId.value;
+            const assignment = {
+                id: editId || `CLASS-ASG-${Date.now()}`,
+                teacherId: teacher.id,
+                teacherName: teacher.fullName || 'Teacher',
+                classGrade,
+                section,
+                campusName: classAssignmentCampusSelect.value,
+                note: classAssignmentNote.value.trim(),
+                updatedAt: new Date().toISOString()
+            };
+            const duplicateIndex = assignments.findIndex((item) => {
+                const existing = splitAssignmentClassSection(item.classGrade, item.section);
+                return existing.classGrade.toLowerCase() === classGrade.toLowerCase() &&
+                    String(existing.section || 'General').toLowerCase() === String(section || 'General').toLowerCase() &&
+                    String(item.id) !== String(editId);
+            });
+            if (duplicateIndex >= 0) {
+                assignments[duplicateIndex] = { ...assignments[duplicateIndex], ...assignment, id: assignments[duplicateIndex].id };
+            } else {
+                const editIndex = assignments.findIndex((item) => String(item.id) === String(editId));
+                if (editIndex >= 0) assignments[editIndex] = assignment;
+                else assignments.push(assignment);
+            }
+            saveAssignments(assignments);
+            resetClassAssignmentForm();
+            renderClassAssignments();
+            showSuccessModal('Class Assigned!', `${assignment.teacherName} is assigned as class incharge for ${formatAssignmentClassSection(assignment.classGrade, assignment.section)}.`);
+        });
+
+        populateClassAssignmentOptions();
+        populateClassAssignmentCampuses();
+        classAssignmentClass.addEventListener('change', () => populateClassAssignmentSectionOptions());
+        classAssignmentTeacher.addEventListener('change', () => {
+            const teacher = assignmentData('eduCore_teachers').find((item) => String(item.id) === String(classAssignmentTeacher.value));
+            populateClassAssignmentCampuses(teacher?.campusName || '');
+        });
+        renderClassAssignments();
+        if (window.lucide) window.lucide.createIcons();
+    </script>
+</body>
+
+</html>

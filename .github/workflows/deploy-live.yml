@@ -1,0 +1,144 @@
+name: Deploy Beacon Light to production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
+env:
+  REPOSITORY: https://github.com/mirzaatif89/Beacon_hall_School_jand.git
+  BRANCH: main
+
+jobs:
+  deploy:
+    name: Sync source and restart cPanel app
+    runs-on: ubuntu-latest
+    steps:
+      - name: Locate the live Beacon application
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          LIVE_APP_PATH: ${{ secrets.LIVE_APP_PATH }}
+          SERVER_APP_PATH: ${{ secrets.SERVER_APP_PATH }}
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: 22
+          script_stop: true
+          envs: LIVE_APP_PATH,SERVER_APP_PATH
+          script: |
+            set -eu
+
+            APP_PATH=""
+            for configured_path in "$SERVER_APP_PATH" "$LIVE_APP_PATH" "$HOME/social-purple-mammoth.37-27-52-96.cpanel.site" "/home/${USER}/social-purple-mammoth.37-27-52-96.cpanel.site" "$HOME/my_school_app"; do
+              if [ -n "$configured_path" ] && [ -d "$configured_path" ]; then
+                APP_PATH="$configured_path"
+                break
+              fi
+            done
+
+            if [ -z "$APP_PATH" ]; then
+              for pid in $(ps -eo pid=,comm= | awk '$2 == "node" { print $1 }'); do
+                process_path="$(readlink -f "/proc/$pid/cwd" 2>/dev/null || true)"
+                if [ -n "$process_path" ] && [ -f "$process_path/package.json" ] && [ -f "$process_path/frontend/students.html" ]; then
+                  APP_PATH="$process_path"
+                  break
+                fi
+              done
+            fi
+
+            if [ -z "$APP_PATH" ]; then
+              STUDENTS_FILE="$(find "$HOME" /home /var/www /srv /opt -maxdepth 9 -type f -path '*/frontend/students.html' 2>/dev/null | head -n 1 || true)"
+              if [ -n "$STUDENTS_FILE" ]; then
+                APP_PATH="$(dirname "$(dirname "$STUDENTS_FILE")")"
+              fi
+            fi
+
+            test -n "$APP_PATH"
+            test -d "$APP_PATH"
+            printf '%s' "$APP_PATH" > "$HOME/.beacon-light-app-path"
+
+      - name: Configure Beacon repository and fetch main
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: 22
+          script_stop: true
+          envs: REPOSITORY,BRANCH
+          script: |
+            set -eu
+            APP_PATH="$(cat "$HOME/.beacon-light-app-path")"
+            cd "$APP_PATH"
+
+            BACKUP_PATH="$HOME/.beacon-light-deploy-backup"
+            mkdir -p "$BACKUP_PATH"
+            for file in .env data/permissions.json data/date_sheet.json data/admin_credentials.json; do
+              if [ -f "$file" ]; then
+                mkdir -p "$BACKUP_PATH/$(dirname "$file")"
+                cp "$file" "$BACKUP_PATH/$file"
+              fi
+            done
+
+            if [ ! -d .git ]; then
+              git init
+            fi
+            git config --global --add safe.directory "$APP_PATH"
+            if git remote get-url origin >/dev/null 2>&1; then
+              git remote set-url origin "$REPOSITORY"
+            else
+              git remote add origin "$REPOSITORY"
+            fi
+            git fetch origin "$BRANCH" --prune
+
+      - name: Checkout and verify latest frontend
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: 22
+          script_stop: true
+          envs: BRANCH
+          script: |
+            set -eu
+            APP_PATH="$(cat "$HOME/.beacon-light-app-path")"
+            BACKUP_PATH="$HOME/.beacon-light-deploy-backup"
+            cd "$APP_PATH"
+
+            git checkout -B "$BRANCH" "origin/$BRANCH"
+            git reset --hard "origin/$BRANCH"
+
+            for file in .env data/permissions.json data/date_sheet.json data/admin_credentials.json; do
+              if [ -f "$BACKUP_PATH/$file" ]; then
+                mkdir -p "$(dirname "$file")"
+                cp "$BACKUP_PATH/$file" "$file"
+              fi
+            done
+
+            test "$(git rev-parse HEAD)" = "$(git rev-parse origin/$BRANCH)"
+            test -f frontend/student_performance.html
+            grep -q "filters:v5-simple-student-lists" frontend/script.js
+            grep -q "databaseStatus" backend/server.js
+
+      - name: Restart cPanel Passenger application
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: 22
+          script_stop: true
+          script: |
+            set -eu
+            APP_PATH="$(cat "$HOME/.beacon-light-app-path")"
+            cd "$APP_PATH"
+            mkdir -p tmp
+            touch tmp/restart.txt
+            echo "Beacon Light deployed successfully: $(git rev-parse HEAD)"

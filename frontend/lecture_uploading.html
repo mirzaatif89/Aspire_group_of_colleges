@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecture Uploading - Aspire Group of Colleges</title>
+    <link rel="icon" type="image/png" href="images/logo.png">
+    <link rel="stylesheet" href="style.css?v=20260814-centered-school-name">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .upload-panel { background:#fff; border:1px solid #cfe8e5; border-radius:16px; padding:1.35rem; margin-bottom:1.5rem; box-shadow:0 12px 30px rgba(15,23,42,.07); }
+        .upload-grid { display:grid; grid-template-columns:minmax(0,160px) repeat(auto-fit,minmax(220px,1fr)); gap:0.75rem; align-items:end; }
+        .upload-grid > div:first-child { max-width: 160px; }
+        .upload-grid > div:last-child { grid-column: 1 / span 2; max-width: 280px; }
+        .upload-grid > div { margin-bottom: 0; }
+        .upload-panel label { display:block; color:#334155; font-size:.82rem; font-weight:800; margin-bottom:.35rem; }
+        .upload-panel input,.upload-panel select,.upload-panel textarea { width:100%; min-height:42px; border:1px solid #cbd5e1; border-radius:10px; background:#fff; color:#0f172a; padding:.65rem .75rem; font:inherit; outline:none; }
+        #lectureUploadForm .upload-grid input,#lectureUploadForm .upload-grid select { min-height:42px; height:42px; padding:.35rem .75rem; }
+        .upload-panel textarea { min-height:120px; resize:vertical; margin-top: 0.5rem; }
+        .upload-table { width:100%; border-collapse:collapse; }
+        .upload-table th,.upload-table td { border-bottom:1px solid #dbecea; padding:.8rem; text-align:left; vertical-align:top; }
+        .upload-table th { background:#f6fbfa; color:#475569; font-size:.78rem; text-transform:uppercase; }
+        .empty-note { padding:1rem; border:1px dashed #cbd5e1; border-radius:12px; color:var(--text-secondary); background:#f8fafc; }
+        .action-row { display:inline-flex; gap:.45rem; flex-wrap:wrap; }
+        .mini-btn { min-height:34px; border:0; border-radius:8px; padding:.45rem .7rem; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:.35rem; }
+        .mini-btn.edit { background:#f1e8f7; color:#43206f; }
+        .mini-btn.delete { background:#fee2e2; color:#b91c1c; }
+        .page-back-btn { display:inline-flex; align-items:center; gap:.45rem; width:max-content; margin-bottom:1rem; padding:.6rem .9rem; border:1px solid #cfe8e5; border-radius:10px; background:#fff; color:#176b4c; font-weight:800; text-decoration:none; box-shadow:0 4px 12px rgba(15,23,42,.05); }
+        .page-back-btn:hover { background:#f0faf6; }
+        .page-back-btn svg { width:18px; height:18px; }
+    </style>
+    <link rel="stylesheet" href="school-theme.css?v=20261002-dashboard-cards-125">
+    <script src="school-branding.js?v=20260924"></script>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="logo-section"><img class="sidebar-logo-img" src="images/logo.png" alt="Aspire Group of Colleges logo"></div>
+            <nav class="nav-links">
+                <a href="dashboard.html" class="nav-item"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
+                <a href="students.html" class="nav-item"><i data-lucide="users"></i><span>Students</span></a>
+                <a href="classes.html" class="nav-item"><i data-lucide="school"></i><span>Classes</span></a>
+            </nav>
+            <a href="settings.html" class="user-profile"><div class="avatar">AD</div><div class="user-info"><h4>Admin User</h4><p>Admin</p></div></a>
+        </aside>
+        <main class="main-content">
+            <header class="header"><div><a href="student_scheduling.html" class="page-back-btn" aria-label="Back to Student Scheduling"><i data-lucide="arrow-left"></i> Back</a><h1>Lecture Uploading</h1><p style="color:var(--text-secondary); margin-top:.3rem;">Upload class-wise lectures for student portal.</p></div></header>
+            <section class="upload-panel">
+                <form id="lectureUploadForm">
+                    <input type="hidden" id="lectureUploadId">
+                    <div class="upload-grid">
+                        <div><label>Class</label><select id="lectureClass" required></select></div>
+                        <div><label>Section</label><select id="lectureSection" required></select></div>
+                        <div><label>Lecture Title</label><input type="text" id="lectureTitle" required placeholder="e.g. Chapter 3 Lecture"></div>
+                        <div><label>Subject</label><input type="text" id="lectureSubject" placeholder="e.g. Science"></div>
+                        <div><label>Lecture Link</label><input type="url" id="lectureUrl" placeholder="https://..."></div>
+                        <div><label>Attach File / Video (up to 30GB)</label><input type="file" id="lectureFile" accept=".pdf,.ppt,.pptx,.doc,.docx,.mp4,.webm,.jpg,.jpeg,.png,.txt" data-max-size="32212254720"></div>
+                    </div>
+                    <div style="margin-top:1rem;"><label>Lecture Notes</label><textarea id="lectureDetails" required placeholder="Write lecture notes, instructions, or links"></textarea></div>
+                    <button type="submit" class="btn btn-primary" id="lectureSaveBtn" style="margin-top:1rem;"><i data-lucide="save"></i> Save Lecture</button>
+                </form>
+            </section>
+            <section class="upload-panel"><h3 style="margin-bottom:1rem;">Uploaded Lectures</h3><div id="lectureUploadList"></div></section>
+        </main>
+    </div>
+    <script src="auth.js?v=20261002-sidebar-facility-nav1"></script>
+    <script src="script.js?v=20261002-sidebar-facility-nav1"></script>
+    <script src="student_schedule_sections.js"></script>
+    <script>
+        const LECTURE_KEY = 'eduCore_uploaded_lectures';
+        const API_BASE_URL = '/api';
+        function data(key) { try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch (_e) { return []; } }
+        function save(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch (_e) { showAppAlert('File/data is too large to save.', 'Storage Full'); return false; } }
+        function esc(value) { return String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char])); }
+        function mergeLectures(localItems = [], apiItems = []) {
+            const map = new Map();
+            [...apiItems, ...localItems].forEach((item) => {
+                if (!item || !item.id) return;
+                map.set(String(item.id), { ...(map.get(String(item.id)) || {}), ...item });
+            });
+            return [...map.values()].sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
+        }
+        async function loadLecturesFromApi() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/uploaded-lectures`);
+                if (!response.ok) throw new Error('Lectures API unavailable.');
+                const result = await response.json().catch(() => ({}));
+                if (!Array.isArray(result.lectures)) return;
+                save(LECTURE_KEY, mergeLectures(data(LECTURE_KEY), result.lectures));
+            } catch (_error) {
+                // Keep local lectures visible if API is temporarily unavailable.
+            }
+        }
+        async function syncLocalLecturesToApi() {
+            const items = data(LECTURE_KEY);
+            for (const item of items) {
+                try {
+                    await fetch(`${API_BASE_URL}/uploaded-lectures`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(item)
+                    });
+                } catch (_error) {}
+            }
+        }
+        function populateClasses() {
+            const helper = window.studentSchedulingSections;
+            const lectures = data(LECTURE_KEY);
+            helper?.populateClassSelect(lectureClass, lectureClass.value, lectures.map((item) => item.classGrade));
+            helper?.populateSectionSelect(lectureSection, lectureClass.value, '', lectureSection.value, lectures);
+        }
+        function readFile(input) {
+            const file = input.files?.[0];
+            if (!file) return Promise.resolve(null);
+            return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve({ name: file.name, dataUrl: reader.result, type: file.type || '' }); reader.onerror = reject; reader.readAsDataURL(file); });
+        }
+        function render() {
+            const items = data(LECTURE_KEY).sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
+            if (!items.length) { lectureUploadList.innerHTML = '<div class="empty-note">No lecture uploaded yet.</div>'; return; }
+            lectureUploadList.innerHTML = `<table class="upload-table"><thead><tr><th>Class</th><th>Section</th><th>Lecture</th><th>Link / File</th><th>Action</th></tr></thead><tbody>${items.map((item) => `<tr><td>${esc(item.classGrade)}</td><td>${esc(item.section || 'General')}</td><td><strong>${esc(item.title)}</strong><br>${esc(item.subject || '-')}<br>${esc(item.details)}</td><td>${item.url ? `<a href="${esc(item.url)}" target="_blank" rel="noopener">Open Link</a><br>` : ''}${item.file?.dataUrl ? `<a href="${item.file.dataUrl}" download="${esc(item.file.name || 'lecture-file')}">${esc(item.file.name || 'Download')}</a>` : (!item.url ? '-' : '')}</td><td><div class="action-row"><button class="mini-btn edit" onclick="editItem('${item.id}')"><i data-lucide="edit-2" width="14"></i> Edit</button><button class="mini-btn delete" onclick="deleteItem('${item.id}')"><i data-lucide="trash-2" width="14"></i> Delete</button></div></td></tr>`).join('')}</tbody></table>`;
+            if (window.lucide) lucide.createIcons();
+        }
+        function editItem(id) {
+            const item = data(LECTURE_KEY).find((entry) => entry.id === id);
+            if (!item) return;
+            lectureUploadId.value = item.id; lectureClass.value = item.classGrade || ''; lectureTitle.value = item.title || ''; lectureSubject.value = item.subject || ''; lectureUrl.value = item.url || ''; lectureDetails.value = item.details || '';
+            window.studentSchedulingSections?.populateSectionSelect(lectureSection, lectureClass.value, '', item.section || 'General', data(LECTURE_KEY));
+            lectureSaveBtn.innerHTML = '<i data-lucide="save"></i> Update Lecture';
+            lectureUploadForm.scrollIntoView({ behavior: 'smooth', block: 'start' }); if (window.lucide) lucide.createIcons();
+        }
+        async function deleteItem(id) {
+            save(LECTURE_KEY, data(LECTURE_KEY).filter((item) => item.id !== id));
+            try { await fetch(`${API_BASE_URL}/uploaded-lectures/${encodeURIComponent(id)}`, { method: 'DELETE' }); } catch (_error) {}
+            render();
+        }
+        lectureUploadForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const editId = lectureUploadId.value;
+            const existing = data(LECTURE_KEY).find((item) => item.id === editId);
+            const file = await readFile(lectureFile);
+            const item = { id: editId || `LECTURE-${Date.now()}`, classGrade: lectureClass.value, section: lectureSection.value, title: lectureTitle.value.trim(), subject: lectureSubject.value.trim(), url: lectureUrl.value.trim(), details: lectureDetails.value.trim(), file: file || existing?.file || null, createdAt: existing?.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString() };
+            if (!item.classGrade || !item.section || !item.title || !item.details) { showAppAlert('Class, section, title, and notes are required.', 'Missing Lecture'); return; }
+            const items = data(LECTURE_KEY); const index = items.findIndex((entry) => entry.id === editId);
+            if (index >= 0) items[index] = item; else items.push(item);
+            if (!save(LECTURE_KEY, items)) return;
+            try {
+                await fetch(`${API_BASE_URL}/uploaded-lectures`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(item)
+                });
+            } catch (_error) {}
+            event.target.reset(); lectureUploadId.value = ''; lectureSaveBtn.innerHTML = '<i data-lucide="save"></i> Save Lecture'; render(); showSuccessModal(editId ? 'Lecture Updated!' : 'Lecture Uploaded!', 'Lecture is visible in student portal.');
+        });
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', populateClasses); else populateClasses();
+        window.studentSchedulingSections?.bindClassSectionControls({ classSelect: lectureClass, sectionSelect: lectureSection, include: data(LECTURE_KEY) });
+        loadLecturesFromApi().then(syncLocalLecturesToApi).finally(render);
+        render();
+        if (window.lucide) lucide.createIcons();
+    </script>
+</body>
+
+</html>

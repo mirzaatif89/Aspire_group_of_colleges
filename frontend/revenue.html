@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revenue Report - Aspire Group of Colleges management</title>
+    <link rel="icon" type="image/png" href="images/logo.png">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .revenue-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .rev-card {
+            background: var(--surface-color);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .rev-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .rev-data h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .rev-data p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .revenue-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .chart-container {
+            background: var(--surface-color);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .class-revenue-list {
+            background: var(--surface-color);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .bar-row {
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+        }
+
+        .bar-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        .bar-label .class-name {
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .bar-label .amount-display {
+            color: var(--primary-color);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .bar-bg {
+            height: 6px;
+            background: #f1f5f9;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: var(--primary-color);
+            border-radius: 4px;
+            transition: width 1s ease-in-out;
+        }
+
+        .month-picker {
+            min-height: var(--app-control-height);
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            background: white;
+            font-weight: 600;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        .revenue-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            flex-wrap: wrap;
+        }
+
+        .revenue-toolbar label {
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            font-weight: 800;
+        }
+
+        .revenue-date-picker {
+            min-height: var(--app-control-height);
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            background: #fff;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .daily-revenue-panel {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.25rem;
+            box-shadow: var(--shadow-sm);
+            margin-top: 1.5rem;
+        }
+
+        .daily-revenue-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .daily-revenue-head h3 {
+            margin: 0;
+        }
+
+        .daily-revenue-meta {
+            color: var(--text-secondary);
+            font-size: 0.86rem;
+            font-weight: 700;
+            margin-top: 0.25rem;
+        }
+
+        .daily-revenue-actions {
+            display: inline-flex;
+            align-items: end;
+            justify-content: flex-end;
+            gap: 0.7rem;
+            flex-wrap: wrap;
+        }
+
+        .daily-revenue-date-field {
+            display: grid;
+            gap: 0.25rem;
+        }
+
+        .daily-revenue-date-field label {
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            font-weight: 800;
+        }
+
+        .daily-revenue-table-wrap {
+            overflow-x: auto;
+        }
+
+        .daily-revenue-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 620px;
+        }
+
+        .daily-revenue-table th,
+        .daily-revenue-table td {
+            padding: 0.85rem 0.8rem;
+            border-bottom: 1px solid var(--border-color);
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        .daily-revenue-table th {
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0;
+            background: #f8fafc;
+        }
+
+        .daily-revenue-table td:last-child,
+        .daily-revenue-table th:last-child {
+            text-align: right;
+            font-weight: 800;
+        }
+
+        .daily-revenue-total {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            align-items: center;
+            margin-top: 1rem;
+            font-weight: 800;
+        }
+
+        .monthly-statement-panel {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.25rem;
+            box-shadow: var(--shadow-sm);
+            margin-top: 1.5rem;
+        }
+
+        .monthly-statement-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: end;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .monthly-statement-head p {
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+            font-size: 0.86rem;
+        }
+
+        .monthly-statement-search {
+            min-height: var(--app-control-height);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.55rem 0.8rem;
+            min-width: min(320px, 100%);
+        }
+
+        .monthly-statement-summary {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(150px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .monthly-statement-summary div {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            background: #f8fafc;
+        }
+
+        .monthly-statement-summary span {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            font-weight: 800;
+            margin-bottom: 0.25rem;
+        }
+
+        .monthly-statement-summary strong {
+            color: var(--text-primary);
+            font-size: 1.05rem;
+        }
+
+        .monthly-statement-table-wrap {
+            overflow-x: auto;
+        }
+
+        .monthly-statement-table {
+            width: 100%;
+            min-width: 980px;
+            border-collapse: collapse;
+        }
+
+        .monthly-statement-table th,
+        .monthly-statement-table td {
+            padding: 0.8rem;
+            border-bottom: 1px solid var(--border-color);
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        .monthly-statement-table th {
+            color: var(--text-secondary);
+            background: #f8fafc;
+            font-size: 0.76rem;
+            text-transform: uppercase;
+            letter-spacing: 0;
+        }
+
+        .monthly-statement-table td:nth-last-child(-n+3),
+        .monthly-statement-table th:nth-last-child(-n+3) {
+            text-align: right;
+            font-weight: 800;
+        }
+
+        .statement-status {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 76px;
+            border-radius: 999px;
+            padding: 0.28rem 0.6rem;
+            font-size: 0.75rem;
+            font-weight: 900;
+        }
+
+        .statement-status.paid { background: #dcfce7; color: #166534; }
+        .statement-status.partial { background: #fef3c7; color: #92400e; }
+        .statement-status.pending { background: #fee2e2; color: #991b1b; }
+
+        .revenue-summary-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+            gap: 1.5rem;
+            align-items: start;
+            margin-bottom: 1.5rem;
+        }
+
+        .all-months-panel {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.25rem;
+            box-shadow: var(--shadow-sm);
+            display: grid;
+            gap: 0.85rem;
+        }
+
+        .all-months-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.7rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .all-months-row:last-child {
+            border-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .all-months-row span {
+            color: var(--text-secondary);
+            font-weight: 700;
+        }
+
+        .profit-value.profit {
+            color: #15803d;
+        }
+
+        .profit-value.loss {
+            color: #dc2626;
+        }
+
+        @media (max-width: 920px) {
+            .revenue-summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .monthly-statement-summary {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="school-theme.css?v=20261002-dashboard-cards-125">
+    <script src="school-branding.js?v=20260924"></script>
+</head>
+
+<body>
+
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo-section">
+                <img class="sidebar-logo-img" src="images/logo.png" alt="Aspire Group of Colleges logo">
+            </div>
+
+            <nav class="nav-links">
+                <a href="dashboard.html" class="nav-item">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="students.html" class="nav-item">
+                    <i data-lucide="users"></i>
+                    <span>Students</span>
+                </a>
+                <a href="teachers.html" class="nav-item">
+                    <i data-lucide="book-open"></i>
+                    <span>Teachers</span>
+                </a>
+                <a href="staff.html" class="nav-item">
+                    <i data-lucide="briefcase"></i>
+                    <span>Staff</span>
+                </a>
+                <a href="classes.html" class="nav-item">
+                    <i data-lucide="school"></i>
+                    <span>Classes</span>
+                </a>
+                <a href="fees.html" class="nav-item">
+                    <i data-lucide="credit-card"></i>
+                    <span>Fees</span>
+                </a>
+                <a href="fee_challan.html" class="nav-item">
+                    <i data-lucide="file-text"></i>
+                    <span>Fee Challan</span>
+                </a>
+                <a href="teacher_salaries.html" class="nav-item">
+                    <i data-lucide="wallet"></i>
+                    <span>Salaries</span>
+                </a>
+                <a href="finance.html" class="nav-item" style="display: none;">
+                    <i data-lucide="receipt"></i>
+                    <span>Bills</span>
+                </a>
+                <a href="exams.html" class="nav-item">
+                    <i data-lucide="clipboard-list"></i>
+                    <span>Exams</span>
+                </a>
+                <a href="revenue.html" class="nav-item active">
+                    <i data-lucide="trending-up"></i>
+                    <span>Revenue</span>
+                </a>
+                <a href="permissions.html" class="nav-item">
+                    <i data-lucide="shield"></i>
+                    <span>Permissions</span>
+                </a>
+                <a href="aboutme.html" class="nav-item">
+                    <i data-lucide="info"></i>
+                    <span>About Us</span>
+                </a>
+                <a href="#" class="nav-item" onclick="logoutUser(event)">
+                    <i data-lucide="log-out"></i>
+                    <span>Logout</span>
+                </a>
+            </nav>
+
+            <a href="settings.html" class="user-profile">
+                <div class="avatar">AD</div>
+                <div class="user-info">
+                    <h4>Admin User</h4>
+                    <p>Principal</p>
+                </div>
+            </a>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="header">
+                <div>
+                    <h1>Revenue Analytics</h1>
+                    <p style="color: var(--text-secondary); margin-top: 0.25rem; font-size: 0.9rem;">
+                        Real-time revenue tracking for <strong id="currentMonthDisplay"></strong>
+                    </p>
+                </div>
+                <div class="revenue-toolbar">
+                    <label for="revenueCampusFilter">Campus</label>
+                    <select class="month-picker" id="revenueCampusFilter" aria-label="Select revenue campus">
+                        <option value="all">All Campuses</option>
+                    </select>
+                    <label for="revenueMonthPicker">Month</label>
+                    <input class="month-picker" id="revenueMonthPicker" type="month" aria-label="Select revenue month">
+                </div>
+            </header>
+
+            <div class="revenue-summary-grid">
+                <div class="revenue-stats" style="margin-bottom: 0;">
+                    <div class="rev-card">
+                        <div class="rev-icon" style="background: rgba(32, 176, 164, 0.1); color: var(--primary-color);">
+                            <i data-lucide="dollar-sign"></i>
+                        </div>
+                        <div class="rev-data">
+                            <p>Expected Revenue</p>
+                            <h3 id="expectedRevenue">PKR 0</h3>
+                        </div>
+                    </div>
+                    <div class="rev-card">
+                        <div class="rev-icon" style="background: rgba(16, 185, 129, 0.1); color: #059669;">
+                            <i data-lucide="check-circle"></i>
+                        </div>
+                        <div class="rev-data">
+                            <p>Collected Revenue</p>
+                            <h3 id="collectedRevenue">PKR 0</h3>
+                        </div>
+                    </div>
+                    <div class="rev-card">
+                        <div class="rev-icon" style="background: rgba(239, 68, 68, 0.1); color: #dc2626;">
+                            <i data-lucide="clock"></i>
+                        </div>
+                        <div class="rev-data">
+                            <p>Pending Amount</p>
+                            <h3 id="pendingRevenue">PKR 0</h3>
+                        </div>
+                    </div>
+                    <div class="rev-card">
+                        <div class="rev-icon" style="background: rgba(245, 158, 11, 0.12); color: #b45309;">
+                            <i data-lucide="badge-alert"></i>
+                        </div>
+                        <div class="rev-data">
+                            <p>Remaining Charges</p>
+                            <h3 id="remainingChargesRevenue">PKR 0</h3>
+                        </div>
+                    </div>
+                    <div class="rev-card">
+                        <div class="rev-icon" style="background: rgba(99, 102, 241, 0.12); color: #4f46e5;">
+                            <i data-lucide="calendar-clock"></i>
+                        </div>
+                        <div class="rev-data">
+                            <p>Monthly Pending</p>
+                            <h3 id="monthlyPendingRevenue">PKR 0</h3>
+                        </div>
+                    </div>
+                </div>
+                <aside class="all-months-panel">
+                    <div>
+                        <h3>All Months Total</h3>
+                        <p style="color:var(--text-secondary); font-size:.85rem; margin-top:.25rem;">Collected revenue and paid expenses.</p>
+                    </div>
+                    <div class="all-months-row"><span>Total Revenue</span><strong id="allMonthsRevenue">PKR 0</strong></div>
+                    <div class="all-months-row"><span>Salary Transfers</span><strong id="allMonthsSalaries">PKR 0</strong></div>
+                    <div class="all-months-row"><span>Paid Bills</span><strong id="allMonthsBills">PKR 0</strong></div>
+                    <div class="all-months-row"><span>Profit / Loss</span><strong id="allMonthsProfitLoss" class="profit-value">PKR 0</strong></div>
+                </aside>
+            </div>
+
+            <div class="revenue-stats">
+                <div class="rev-card">
+                    <div class="rev-icon" style="background: rgba(251, 191, 36, 0.16); color: #b45309;">
+                        <i data-lucide="receipt"></i>
+                    </div>
+                    <div class="rev-data">
+                        <p>Paid Bills / Expenses</p>
+                        <h3 id="paidBillsExpense">PKR 0</h3>
+                    </div>
+                </div>
+                <div class="rev-card">
+                    <div class="rev-icon" style="background: rgba(67, 32, 111, 0.12); color: #43206f;">
+                        <i data-lucide="calculator"></i>
+                    </div>
+                    <div class="rev-data">
+                        <p>Total Paid Expenses</p>
+                        <h3 id="paidExpensesTotal">PKR 0</h3>
+                    </div>
+                </div>
+                <div class="rev-card">
+                    <div class="rev-icon" style="background: rgba(34, 197, 94, 0.12); color: #15803d;">
+                        <i data-lucide="trending-up"></i>
+                    </div>
+                    <div class="rev-data">
+                        <p>Profit / Loss</p>
+                        <h3 id="profitLossRevenue" class="profit-value">PKR 0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="revenue-stats" style="margin-top: 1.5rem;">
+                <div class="rev-card">
+                    <div class="rev-icon" style="background: rgba(20, 184, 166, 0.12); color: #0f766e;">
+                        <i data-lucide="calendar-days"></i>
+                    </div>
+                    <div class="rev-data">
+                        <p id="monthToDateRevenueLabel">Month To Date Revenue</p>
+                        <h3 id="monthToDateRevenue">PKR 0</h3>
+                    </div>
+                </div>
+                <div class="rev-card">
+                    <div class="rev-icon" style="background: rgba(245, 158, 11, 0.12); color: #b45309;">
+                        <i data-lucide="receipt-text"></i>
+                    </div>
+                    <div class="rev-data">
+                        <p id="monthToDateExpenseLabel">Month To Date Expenses</p>
+                        <h3 id="monthToDateExpenses">PKR 0</h3>
+                    </div>
+                </div>
+                <div class="rev-card">
+                    <div class="rev-icon" style="background: rgba(34, 197, 94, 0.12); color: #15803d;">
+                        <i data-lucide="activity"></i>
+                    </div>
+                    <div class="rev-data">
+                        <p id="monthToDateProfitLabel">Profit / Loss To Date</p>
+                        <h3 id="monthToDateProfitLoss" class="profit-value">PKR 0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="revenue-stats" style="margin-top: 1.5rem;">
+                <div class="rev-card">
+                    <div class="rev-icon" style="background: rgba(99, 102, 241, 0.1); color: #4f46e5;">
+                        <i data-lucide="wallet"></i>
+                    </div>
+                    <div class="rev-data">
+                        <p>Salary Budget</p>
+                        <h3 id="salaryBudget">PKR 0</h3>
+                    </div>
+                </div>
+                <div class="rev-card">
+                    <div class="rev-icon" style="background: rgba(16, 185, 129, 0.1); color: #059669;">
+                        <i data-lucide="send"></i>
+                    </div>
+                    <div class="rev-data">
+                        <p>Transferred Salaries</p>
+                        <h3 id="transferredSalaries">PKR 0</h3>
+                    </div>
+                </div>
+                <div class="rev-card">
+                    <div class="rev-icon" style="background: rgba(239, 68, 68, 0.1); color: #dc2626;">
+                        <i data-lucide="clock-3"></i>
+                    </div>
+                    <div class="rev-data">
+                        <p>Pending Salaries</p>
+                        <h3 id="pendingSalaries">PKR 0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="revenue-stats" style="margin-top: 1.5rem;">
+                <div class="rev-card">
+                    <div class="rev-icon" style="background: rgba(14, 165, 233, 0.12); color: #0284c7;">
+                        <i data-lucide="badge-dollar-sign"></i>
+                    </div>
+                    <div class="rev-data">
+                        <p>Net Expected After Salaries</p>
+                        <h3 id="netExpectedRevenue">PKR 0</h3>
+                    </div>
+                </div>
+                <div class="rev-card">
+                    <div class="rev-icon" style="background: rgba(34, 197, 94, 0.12); color: #15803d;">
+                        <i data-lucide="landmark"></i>
+                    </div>
+                    <div class="rev-data">
+                        <p>Net Collected After Transfers</p>
+                        <h3 id="netCollectedRevenue">PKR 0</h3>
+                    </div>
+                </div>
+                <div class="rev-card">
+                    <div class="rev-icon" style="background: rgba(245, 158, 11, 0.12); color: #b45309;">
+                        <i data-lucide="scale"></i>
+                    </div>
+                    <div class="rev-data">
+                        <p>Remaining Balance</p>
+                        <h3 id="netPendingRevenue">PKR 0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="class-revenue-list" style="margin-top: 2rem;">
+                <h3 style="margin-bottom: 1.5rem;">Collection by Class</h3>
+                <div id="classBreakdownContainer">
+                    <!-- Bars by JS -->
+                </div>
+            </div>
+
+            <section class="monthly-statement-panel">
+                <div class="monthly-statement-head">
+                    <div>
+                        <h3>Month-wise Paid / Pending Statement</h3>
+                        <p id="monthlyStatementMeta">Selected month statement will appear here.</p>
+                    </div>
+                    <input class="monthly-statement-search" id="monthlyStatementSearch" type="search" placeholder="Search student, class, roll no...">
+                </div>
+                <div class="monthly-statement-summary">
+                    <div><span>Total Students</span><strong id="statementStudentTotal">0</strong></div>
+                    <div><span>Paid / Partial</span><strong id="statementPaidTotal">0</strong></div>
+                    <div><span>Pending Students</span><strong id="statementPendingTotal">0</strong></div>
+                    <div><span>Pending Amount</span><strong id="statementPendingAmount">PKR 0</strong></div>
+                </div>
+                <div class="monthly-statement-table-wrap">
+                    <table class="monthly-statement-table">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Class</th>
+                                <th>Roll No</th>
+                                <th>Campus</th>
+                                <th>Status</th>
+                                <th>Paid Date</th>
+                                <th>Monthly Fee</th>
+                                <th>Remaining</th>
+                                <th>Expected</th>
+                                <th>Paid</th>
+                                <th>Pending</th>
+                            </tr>
+                        </thead>
+                        <tbody id="monthlyStatementBody">
+                            <tr><td colspan="11" style="text-align:center; color:var(--text-secondary);">Loading statement...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="daily-revenue-panel">
+                <div class="daily-revenue-head">
+                    <div>
+                        <h3>Daily Fee Collection by Class</h3>
+                        <div class="daily-revenue-meta" id="dailyRevenueMeta">Select a date to view fee collection.</div>
+                    </div>
+                    <div class="daily-revenue-actions">
+                        <div class="daily-revenue-date-field">
+                            <label for="revenueDatePicker">Date</label>
+                            <input class="revenue-date-picker" id="revenueDatePicker" type="date" aria-label="Select revenue print date">
+                        </div>
+                        <button class="btn btn-outline" type="button" onclick="printDailyRevenueReport()">
+                            <i data-lucide="printer"></i> Print
+                        </button>
+                    </div>
+                </div>
+                <div class="daily-revenue-table-wrap">
+                    <table class="daily-revenue-table">
+                        <thead>
+                            <tr>
+                                <th>Class</th>
+                                <th>Students Paid</th>
+                                <th>Payments</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dailyRevenueTableBody">
+                            <tr>
+                                <td colspan="4" style="text-align:center; color:var(--text-secondary);">No date selected.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="daily-revenue-total">
+                    <span>Total:</span>
+                    <strong id="dailyRevenueTotal">PKR 0</strong>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="script.js?v=20261002-revenue-fix1"></script>
+    <script>
+        const STORAGE_KEY_MONTHLY_FEES = 'eduCore_monthly_fees';
+        const STORAGE_KEY_REVENUE_BILLS = 'eduCore_bills';
+        const monthsNames = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        ];
+
+        let revenueRefreshTimer = null;
+        let selectedRevenueMonthKey = '';
+        let revenueMonthManuallySelected = false;
+        let selectedRevenueDateKey = '';
+        let dailyRevenueRows = [];
+        let dailyRevenueTotalAmount = 0;
+        let monthlyStatementRows = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            selectedRevenueMonthKey = getCurrentMonthMeta().monthKey;
+            selectedRevenueDateKey = getTodayDateKey();
+            initRevenueMonthPicker();
+            initRevenueDatePicker();
+            initRevenueCampusFilter();
+            document.getElementById('revenueMonthPicker')?.addEventListener('change', (event) => {
+                selectedRevenueMonthKey = String(event.target.value || getCurrentMonthMeta().monthKey);
+                revenueMonthManuallySelected = true;
+                updateRevenueReport();
+            });
+            document.getElementById('revenueDatePicker')?.addEventListener('change', (event) => {
+                selectedRevenueDateKey = String(event.target.value || getTodayDateKey());
+                updateRevenueReport();
+            });
+            document.getElementById('monthlyStatementSearch')?.addEventListener('input', renderMonthlyStatementRows);
+
+            attachRevenueLiveUpdates();
+            updateRevenueReport();
+            setTimeout(updateRevenueReport, 400);
+            setTimeout(updateRevenueReport, 1200);
+        });
+
+        async function initRevenueCampusFilter() {
+            const select = document.getElementById('revenueCampusFilter');
+            if (!select) return;
+
+            const user = typeof getLoggedInUser === 'function' ? getLoggedInUser() : null;
+            const branchCampus = user?.role === 'Branch' && user.campusName ? String(user.campusName).trim() : '';
+            const savedValue = typeof getGlobalCampusFilterForCurrentUser === 'function'
+                ? getGlobalCampusFilterForCurrentUser()
+                : (localStorage.getItem('eduCore_dashboard_campus_filter') || 'all');
+
+            let campuses = [];
+            try {
+                campuses = typeof loadRegisteredCampusNames === 'function' ? await loadRegisteredCampusNames() : [];
+            } catch (_error) {
+                campuses = [];
+            }
+
+            if (branchCampus && !campuses.includes(branchCampus)) campuses.unshift(branchCampus);
+            select.innerHTML = '<option value="all">All Campuses</option>';
+            campuses.forEach((campusName) => {
+                const option = document.createElement('option');
+                option.value = campusName;
+                option.textContent = campusName;
+                select.appendChild(option);
+            });
+
+            if (branchCampus) {
+                select.value = branchCampus;
+                select.disabled = true;
+                if (typeof setSavedGlobalCampusFilter === 'function') setSavedGlobalCampusFilter(branchCampus);
+            } else {
+                select.value = Array.from(select.options).some((option) => option.value === savedValue) ? savedValue : 'all';
+                if (typeof setSavedGlobalCampusFilter === 'function') setSavedGlobalCampusFilter(select.value || 'all');
+            }
+
+            if (!select.dataset.revenueCampusBound) {
+                select.dataset.revenueCampusBound = 'true';
+                select.addEventListener('change', () => {
+                    if (typeof setSavedGlobalCampusFilter === 'function') {
+                        setSavedGlobalCampusFilter(select.value || 'all');
+                    } else {
+                        localStorage.setItem('eduCore_dashboard_campus_filter', select.value || 'all');
+                    }
+                    updateRevenueReport();
+                });
+            }
+
+            updateRevenueReport();
+        }
+
+        function scheduleRevenueRefresh(delay = 150) {
+            clearTimeout(revenueRefreshTimer);
+            revenueRefreshTimer = setTimeout(() => {
+                updateRevenueReport();
+            }, delay);
+        }
+
+        function attachRevenueLiveUpdates() {
+            window.addEventListener('storage', () => scheduleRevenueRefresh(50));
+            window.addEventListener('focus', () => scheduleRevenueRefresh(50));
+            window.addEventListener('pageshow', () => scheduleRevenueRefresh(50));
+
+            if (typeof socket !== 'undefined' && socket) {
+                socket.on('students_update', () => scheduleRevenueRefresh());
+                socket.on('teachers_update', () => scheduleRevenueRefresh());
+                socket.on('staff_update', () => scheduleRevenueRefresh());
+            }
+        }
+
+        // Define standard class mapping (same as fees.html)
+        const feeClasses = [
+            { id: 'play-group', name: 'Play Group', keywords: ['play', 'pg', 'playgroup', 'play group', 'montessori junior blue'] },
+            { id: 'nursery', name: 'Nursarry', keywords: ['nursery', 'nursary', 'nursarry', 'nur', 'kg1', 'montessori junior red'] },
+            { id: 'prep', name: 'Prep', keywords: ['prep', 'kg2', 'preschool', 'pre', 'montessori junior green'] },
+            { id: 'g1', name: 'Class One', keywords: ['1', 'one', '1st', 'class 1', 'class one', 'grade 1', 'grade 1st'] },
+            { id: 'g2', name: 'Class Two', keywords: ['2', 'two', '2nd', 'class 2', 'class two', 'grade 2', 'grade 2nd'] },
+            { id: 'g3', name: 'Class Three', keywords: ['3', 'three', '3rd', 'class 3', 'class three', 'grade 3', 'grade 3rd'] },
+            { id: 'g4', name: 'Class Four', keywords: ['4', 'four', '4th', 'class 4', 'class four', 'grade 4', 'grade 4th'] },
+            { id: 'g5', name: 'Class Five', keywords: ['5', 'five', '5th', 'class 5', 'class five', 'grade 5', 'grade 5th'] },
+            { id: 'g6', name: 'Class Six', keywords: ['6', 'six', '6th', 'class 6', 'class six', 'grade 6', 'grade 6th'] },
+            { id: 'g7', name: 'Class Seven', keywords: ['7', 'seven', '7th', 'class 7', 'class seven', 'grade 7', 'grade 7th'] },
+            { id: 'g8', name: 'Class Eight', keywords: ['8', 'eight', '8th', 'class 8', 'class eight', 'grade 8', 'grade 8th'] },
+            { id: 'g9', name: 'Class Nine', keywords: ['9', 'nine', '9th', 'class 9', 'class nine', 'grade 9', 'grade 9th'] },
+            { id: 'g10', name: 'Class Ten', keywords: ['10', 'ten', '10th', 'class 10', 'class ten', 'grade 10', 'grade 10th'] },
+            { id: 'graduate', name: 'Graduate', keywords: ['graduate', 'graduated', 'alumni'] }
+        ];
+
+        function getStandardClassName(rawClass) {
+            if (!rawClass) return 'Unassigned Class';
+            const normalized = rawClass.toLowerCase().trim();
+
+            for (const cls of feeClasses) {
+                if (cls.keywords.some(k => normalized === k || normalized === `class ${k}`)) {
+                    return cls.name;
+                }
+            }
+            return rawClass.trim();
+        }
+
+        function getCurrentMonthMeta() {
+            const now = new Date();
+            return getMonthMetaFromKey(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
+        }
+
+        function getMonthMetaFromKey(monthKey) {
+            const match = String(monthKey || '').match(/^(\d{4})-(\d{2})$/);
+            const now = new Date();
+            const year = match ? Number(match[1]) : now.getFullYear();
+            const monthIndex = match ? Math.min(Math.max(Number(match[2]) - 1, 0), 11) : now.getMonth();
+            return {
+                monthName: monthsNames[monthIndex],
+                monthShort: monthsNames[monthIndex].slice(0, 3),
+                monthIndex,
+                year,
+                monthKey: `${year}-${String(monthIndex + 1).padStart(2, '0')}`
+            };
+        }
+
+        function initRevenueMonthPicker() {
+            const picker = document.getElementById('revenueMonthPicker');
+            if (!picker) return;
+            picker.value = selectedRevenueMonthKey || getCurrentMonthMeta().monthKey;
+        }
+
+        function getTodayDateKey() {
+            const now = new Date();
+            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        }
+
+        function initRevenueDatePicker() {
+            const picker = document.getElementById('revenueDatePicker');
+            if (!picker) return;
+            picker.value = selectedRevenueDateKey || getTodayDateKey();
+        }
+
+        function formatRevenueMoney(value) {
+            return 'PKR ' + Math.round(parseRevenueAmount(value)).toLocaleString('en-PK');
+        }
+
+        function parseRevenueAmount(value) {
+            const amount = Number(String(value ?? '').replace(/,/g, '').trim());
+            return Number.isFinite(amount) ? amount : 0;
+        }
+
+        function normalizeRevenueDateKey(value) {
+            const raw = String(value || '').trim();
+            if (!raw) return '';
+            if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+            const slashDate = raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+            if (slashDate) {
+                return `${slashDate[3]}-${slashDate[2].padStart(2, '0')}-${slashDate[1].padStart(2, '0')}`;
+            }
+            const parsed = new Date(raw);
+            if (Number.isNaN(parsed.getTime())) return '';
+            return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
+        }
+
+        function formatRevenueDateLabel(dateKey = '') {
+            const parsed = new Date(`${dateKey || getTodayDateKey()}T00:00:00`);
+            if (Number.isNaN(parsed.getTime())) return dateKey || '-';
+            return parsed.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+
+        function getRevenueMonthStartKey(monthMeta = getCurrentMonthMeta()) {
+            return `${monthMeta.year}-${String(monthMeta.monthIndex + 1).padStart(2, '0')}-01`;
+        }
+
+        function getRevenueMonthEndKey(monthMeta = getCurrentMonthMeta()) {
+            const lastDate = new Date(monthMeta.year, monthMeta.monthIndex + 1, 0);
+            return `${lastDate.getFullYear()}-${String(lastDate.getMonth() + 1).padStart(2, '0')}-${String(lastDate.getDate()).padStart(2, '0')}`;
+        }
+
+        function getRevenueMonthToDateCutoffKey(monthMeta = getCurrentMonthMeta()) {
+            const todayKey = getTodayDateKey();
+            const monthStartKey = getRevenueMonthStartKey(monthMeta);
+            const monthEndKey = getRevenueMonthEndKey(monthMeta);
+            if (todayKey < monthStartKey) return monthStartKey;
+            if (todayKey > monthEndKey) return monthEndKey;
+            return todayKey;
+        }
+
+        function isRevenueDateInRange(dateKey = '', startKey = '', endKey = '') {
+            const normalized = normalizeRevenueDateKey(dateKey);
+            if (!normalized) return false;
+            return (!startKey || normalized >= startKey) && (!endKey || normalized <= endKey);
+        }
+
+        function getRevenueMonthToDateLabel(monthMeta = getCurrentMonthMeta()) {
+            return `${formatRevenueDateLabel(getRevenueMonthStartKey(monthMeta))} to ${formatRevenueDateLabel(getRevenueMonthToDateCutoffKey(monthMeta))}`;
+        }
+
+        function normalizeFeeMonthToKey(value) {
+            const raw = String(value || '').trim();
+            if (!raw) return '';
+
+            const parsed = new Date(raw.replace(',', ' 1,'));
+            if (!Number.isNaN(parsed.getTime())) {
+                return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}`;
+            }
+
+            const lowered = raw.toLowerCase();
+            const monthIndex = monthsNames.findIndex(month =>
+                lowered === month.toLowerCase() || lowered.startsWith(month.toLowerCase().slice(0, 3))
+            );
+
+            if (monthIndex === -1) return '';
+
+            const yearMatch = lowered.match(/\b(20\d{2})\b/);
+            const year = yearMatch ? Number(yearMatch[1]) : new Date().getFullYear();
+            return `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
+        }
+
+        function getPaymentFallbackYear(fallbackDate = '') {
+            if (typeof getDashboardPaymentFallbackYear === 'function') return getDashboardPaymentFallbackYear(fallbackDate);
+            const raw = String(fallbackDate || '').trim();
+            const slashDate = raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+            if (slashDate) return Number(slashDate[3]);
+            const parsed = new Date(raw);
+            if (!Number.isNaN(parsed.getTime())) return parsed.getFullYear();
+            return new Date().getFullYear();
+        }
+
+        function getPaymentMonthKeys(value, fallbackDate = '') {
+            if (typeof getDashboardPaymentMonthKeys === 'function') return getDashboardPaymentMonthKeys(value, fallbackDate);
+            const raw = String(value || '').trim();
+            if (!raw) return [];
+            const lowered = raw.toLowerCase();
+            const yearMatch = lowered.match(/\b(20\d{2})\b/);
+            const fallbackYear = yearMatch ? Number(yearMatch[1]) : getPaymentFallbackYear(fallbackDate);
+            const monthKeys = monthsNames
+                .map((month, monthIndex) => ({ month, monthIndex }))
+                .filter(({ month }) => lowered.includes(month.toLowerCase()) || lowered.includes(month.slice(0, 3).toLowerCase()))
+                .map(({ monthIndex }) => `${fallbackYear}-${String(monthIndex + 1).padStart(2, '0')}`);
+            if (monthKeys.length) return Array.from(new Set(monthKeys));
+            const single = normalizeFeeMonthToKey(raw);
+            return single ? [single] : [];
+        }
+
+        function getLatestRevenuePaymentMonthKey(payments = []) {
+            if (typeof getLatestDashboardPaymentMonthKey === 'function') return getLatestDashboardPaymentMonthKey(payments);
+            return (Array.isArray(payments) ? payments : []).reduce((latestMonthKey, payment) => {
+                if (!isRevenueFeePayment(payment)) return latestMonthKey;
+                const monthKeys = getPaymentMonthKeys(payment.feeMonth, payment.paidAt || payment.paymentDateLabel || payment.createdAt);
+                monthKeys.forEach((monthKey) => {
+                    if (!latestMonthKey || monthKey > latestMonthKey) latestMonthKey = monthKey;
+                });
+                return latestMonthKey;
+            }, '');
+        }
+
+        function isRevenueFeePayment(payment = {}) {
+            if (typeof isDashboardFeeCollectionPayment === 'function') return isDashboardFeeCollectionPayment(payment);
+            const status = String(payment?.status || '').toLowerCase();
+            const source = String(payment?.paymentSource || payment?.paymentMode || '').toLowerCase();
+            return ['paid', 'partial'].includes(status) && !['fine', 'fine correction', 'correction'].includes(source);
+        }
+
+        function getRevenueStudentFee(student = {}) {
+            if (typeof getDashboardStudentFee === 'function') return Math.max(Number(getDashboardStudentFee(student) || 0), 0);
+            return (student?.freeStudy === true || student?.freeStudy === 'true' || String(student?.zeroFeeReason || student?.freeStudyReason || '').trim())
+                ? 0
+                : Math.max(parseRevenueAmount(student.monthlyFee || student.fee || 0), 0);
+        }
+
+        function getRevenuePaymentAmountForMonth(payment = {}, monthKey = '') {
+            if (!isRevenueFeePayment(payment)) return 0;
+            const amount = Math.max(parseRevenueAmount(payment.amount), 0);
+            if (!(amount > 0)) return 0;
+            const paymentMonths = getPaymentMonthKeys(payment.feeMonth, payment.paidAt || payment.paymentDateLabel || payment.createdAt);
+            if (!paymentMonths.includes(monthKey)) return 0;
+            return amount / Math.max(paymentMonths.length, 1);
+        }
+
+        function buildMonthlyStatement(students = [], payments = [], monthMeta = getCurrentMonthMeta(), backendLoaded = true) {
+            const monthlyFeesData = (() => {
+                try { return JSON.parse(localStorage.getItem(STORAGE_KEY_MONTHLY_FEES) || '{}') || {}; }
+                catch (_error) { return {}; }
+            })();
+            const paymentMap = new Map();
+
+            payments.forEach((payment) => {
+                if (!payment || !payment.studentId) return;
+                const amountForMonth = getRevenuePaymentAmountForMonth(payment, monthMeta.monthKey);
+                if (!(amountForMonth > 0)) return;
+                const studentId = String(payment.studentId);
+                const existing = paymentMap.get(studentId) || { paidAmount: 0, dates: [], statuses: [] };
+                existing.paidAmount += amountForMonth;
+                const dateLabel = payment.paymentDateLabel || formatRevenueDateLabel(normalizeRevenueDateKey(payment.paidAt || payment.createdAt));
+                if (dateLabel && dateLabel !== '-') existing.dates.push(dateLabel);
+                if (payment.status) existing.statuses.push(String(payment.status));
+                paymentMap.set(studentId, existing);
+            });
+
+            return students
+                .filter((student) => studentAppliesToRevenueMonth(student, monthMeta))
+                .map((student) => {
+                    const studentId = String(student.id || '');
+                    const monthlyFee = getRevenueStudentFee(student);
+                    const remainingCharges = Math.max(parseRevenueAmount(student.remainingAmount || student.dueBalance || student.balance || 0), 0);
+                    const expected = monthlyFee + remainingCharges;
+                    const payment = paymentMap.get(studentId) || { paidAmount: 0, dates: [], statuses: [] };
+                    const localPaid = !backendLoaded && monthlyFeesData?.[studentId]?.[monthMeta.monthName] === 'Paid';
+                    const paidAmount = Math.max(payment.paidAmount || 0, localPaid ? monthlyFee : 0);
+                    const monthlyPending = Math.max(monthlyFee - Math.min(paidAmount, monthlyFee), 0);
+                    const pendingAmount = Math.max(expected - paidAmount, 0);
+                    const remainingPending = Math.max(pendingAmount - monthlyPending, 0);
+                    const status = expected <= 0
+                        ? 'Paid'
+                        : (paidAmount >= expected ? 'Paid' : (paidAmount > 0 ? 'Partial' : 'Pending'));
+                    return {
+                        studentId,
+                        studentName: student.fullName || student.name || '-',
+                        className: getStandardClassName(student.classGrade || 'Unassigned Class'),
+                        rawClass: student.classGrade || '-',
+                        rollNo: student.rollNo || '-',
+                        campusName: student.campusName || student.branchName || student.campus || 'Main Campus',
+                        expected,
+                        monthlyFee,
+                        remainingCharges,
+                        paidAmount,
+                        pendingAmount,
+                        monthlyPending,
+                        remainingPending,
+                        status,
+                        paidDate: Array.from(new Set(payment.dates)).join(', ') || '-'
+                    };
+                });
+        }
+
+        function studentAppliesToRevenueMonth(student, monthMeta) {
+            const rawStart = student?.admissionDate || student?.createdAt || '';
+            if (!rawStart) return true;
+            const startDateKey = normalizeRevenueDateKey(rawStart);
+            if (!startDateKey) return true;
+            const startKey = startDateKey.slice(0, 7);
+            return startKey <= monthMeta.monthKey;
+        }
+
+        function readRevenueBills() {
+            try {
+                const bills = JSON.parse(localStorage.getItem(STORAGE_KEY_REVENUE_BILLS) || '[]');
+                return Array.isArray(bills) ? bills : [];
+            } catch (_error) {
+                return [];
+            }
+        }
+
+        function revenueMatchesSelectedCampus(record = {}) {
+            return typeof recordMatchesGlobalCampus === 'function' ? recordMatchesGlobalCampus(record) : true;
+        }
+
+        function getRevenueScopedStudents() {
+            const students = getData(STORAGE_KEY_STUDENTS);
+            return typeof getGlobalCampusFilteredRecords === 'function' ? getGlobalCampusFilteredRecords(students) : students;
+        }
+
+        function attachRevenuePaymentCampus(payments = [], students = getData(STORAGE_KEY_STUDENTS)) {
+            const studentList = Array.isArray(students) ? students : [];
+            const studentMap = new Map(studentList.map((student) => [String(student.id || ''), student]));
+            const rollMap = new Map(studentList
+                .filter((student) => String(student?.rollNo || '').trim())
+                .map((student) => [String(student.rollNo).trim().toLowerCase(), student]));
+            const nameRollMap = new Map(studentList
+                .filter((student) => String(student?.fullName || '').trim() || String(student?.rollNo || '').trim())
+                .map((student) => [
+                    `${String(student.fullName || '').trim().toLowerCase()}|${String(student.rollNo || '').trim().toLowerCase()}|${String(student.classGrade || '').trim().toLowerCase()}`,
+                    student
+                ]));
+            return (Array.isArray(payments) ? payments : []).map((payment) => {
+                const student = studentMap.get(String(payment?.studentId || '')) ||
+                    rollMap.get(String(payment?.rollNo || '').trim().toLowerCase()) ||
+                    nameRollMap.get(`${String(payment?.studentName || '').trim().toLowerCase()}|${String(payment?.rollNo || '').trim().toLowerCase()}|${String(payment?.classGrade || '').trim().toLowerCase()}`) ||
+                    {};
+                return {
+                    ...payment,
+                    studentId: payment?.studentId || student.id || '',
+                    campusName: payment?.campusName || student.campusName || student.branchName || student.campus || ''
+                };
+            });
+        }
+
+        function getRevenueScopedPayments(payments = [], students = getData(STORAGE_KEY_STUDENTS)) {
+            return attachRevenuePaymentCampus(payments, students).filter(revenueMatchesSelectedCampus);
+        }
+
+        function normalizeRevenueBillMonthKey(bill) {
+            const dateValue = bill?.billDate || bill?.date || bill?.paidAt || bill?.createdAt || '';
+            const parsed = new Date(dateValue);
+            if (Number.isNaN(parsed.getTime())) return '';
+            return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}`;
+        }
+
+        function getPaidBillsAmount(monthKey = '') {
+            return readRevenueBills()
+                .filter(revenueMatchesSelectedCampus)
+                .filter((bill) => String(bill.status || '').toLowerCase() === 'paid')
+                .filter((bill) => !monthKey || normalizeRevenueBillMonthKey(bill) === monthKey)
+                .reduce((total, bill) => total + Math.max(parseRevenueAmount(bill.amount), 0), 0);
+        }
+
+        function getPaidBillsAmountToDate(monthMeta = getCurrentMonthMeta()) {
+            const startKey = getRevenueMonthStartKey(monthMeta);
+            const cutoffKey = getRevenueMonthToDateCutoffKey(monthMeta);
+            return readRevenueBills()
+                .filter(revenueMatchesSelectedCampus)
+                .filter((bill) => String(bill.status || '').toLowerCase() === 'paid')
+                .filter((bill) => isRevenueDateInRange(bill?.billDate || bill?.date || bill?.paidAt || bill?.createdAt, startKey, cutoffKey))
+                .reduce((total, bill) => total + Math.max(parseRevenueAmount(bill.amount), 0), 0);
+        }
+
+        function getAllSalaryTransfers() {
+            const salaries = typeof getTeacherSalaries === 'function' ? getTeacherSalaries() : {};
+            const roster = typeof buildSalaryRoster === 'function' ? buildSalaryRoster() : [];
+            const allowedKeys = new Set();
+            roster.forEach((entry) => {
+                allowedKeys.add(`${entry.entityType}_${entry.id}_`);
+                if (entry.entityType === 'teacher') allowedKeys.add(`${entry.id}_`);
+            });
+            return Object.entries(salaries || {}).reduce((total, [key, payment]) => {
+                if (!/20\d{2}-\d{2}$/.test(String(key || ''))) return total;
+                if (allowedKeys.size && !Array.from(allowedKeys).some((prefix) => String(key).startsWith(prefix))) return total;
+                return total + Math.max(parseRevenueAmount(payment?.amount), 0);
+            }, 0);
+        }
+
+        function getSalaryTransfersToDate(monthMeta = getCurrentMonthMeta()) {
+            const salaries = typeof getTeacherSalaries === 'function' ? getTeacherSalaries() : {};
+            const roster = typeof buildSalaryRoster === 'function' ? buildSalaryRoster() : [];
+            const cutoffKey = getRevenueMonthToDateCutoffKey(monthMeta);
+            return roster.reduce((total, entry) => {
+                const payment = typeof getSalaryPaymentRecord === 'function'
+                    ? getSalaryPaymentRecord(salaries, entry.entityType, entry.id, monthMeta.monthKey)
+                    : null;
+                if (!payment) return total;
+                const paymentDateKey = normalizeRevenueDateKey(payment.date || payment.paidAt || payment.createdAt || '');
+                if (paymentDateKey && paymentDateKey > cutoffKey) return total;
+                const breakdown = typeof getSalaryBreakdown === 'function'
+                    ? getSalaryBreakdown(entry, monthMeta.monthKey)
+                    : { netSalary: parseRevenueAmount(entry.salary || 0) };
+                const paymentAmount = parseRevenueAmount(payment?.amount);
+                return total + (paymentAmount > 0 ? paymentAmount : Math.max(parseRevenueAmount(breakdown.netSalary), 0));
+            }, 0);
+        }
+
+        function getCollectedRevenueToDate(payments = [], monthMeta = getCurrentMonthMeta()) {
+            const startKey = getRevenueMonthStartKey(monthMeta);
+            const cutoffKey = getRevenueMonthToDateCutoffKey(monthMeta);
+            return (Array.isArray(payments) ? payments : []).reduce((total, payment) => {
+                if (!isRevenueFeePayment(payment)) return total;
+                const paymentDateKey = normalizeRevenueDateKey(payment.paidAt || payment.paymentDateLabel || payment.createdAt || '');
+                if (!isRevenueDateInRange(paymentDateKey, startKey, cutoffKey)) return total;
+                return total + Math.max(parseRevenueAmount(payment.amount), 0);
+            }, 0);
+        }
+
+        function setProfitLossValue(elementId, value) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            const amount = Number(value || 0);
+            element.innerText = `${amount < 0 ? 'Loss: ' : 'Profit: '}${formatRevenueMoney(Math.abs(amount))}`;
+            element.classList.toggle('loss', amount < 0);
+            element.classList.toggle('profit', amount >= 0);
+        }
+
+        async function fetchCollectedFeePayments() {
+            const endpoints = [`${API_BASE_URL}/fees/payments`, `${API_BASE_URL}/fees`];
+
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(endpoint);
+                    const result = await parseJsonResponse(response, 'Fee payments could not be loaded.');
+
+                    if (!response.ok || result?.success === false) {
+                        throw new Error(result?.message || 'Fee payments could not be loaded.');
+                    }
+
+                    return { payments: Array.isArray(result?.payments) ? result.payments : [], loaded: true };
+                } catch (error) {
+                    console.warn(`Revenue page could not load backend fee payments from ${endpoint}:`, error.message);
+                }
+            }
+
+            return { payments: [], loaded: false };
+        }
+
+        async function refreshRevenueStudentsFromBackend() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/students`);
+                if (!response.ok) throw new Error('Students could not be loaded.');
+                const result = await parseJsonResponse(response, 'Students could not be loaded.');
+                const records = typeof normalizeApiRecordList === 'function' ? normalizeApiRecordList(result, 'students') : (Array.isArray(result) ? result : (result.students || []));
+                const merged = typeof mergeStudentRecords === 'function' ? mergeStudentRecords(records, { preserveLocalOnly: false }) : records;
+                const balances = typeof loadFeeDueBalances === 'function' ? await loadFeeDueBalances() : {};
+                const students = typeof applyFeeDueBalancesToStudents === 'function' ? applyFeeDueBalancesToStudents(merged, balances) : merged;
+                localStorage.setItem(STORAGE_KEY_STUDENTS, JSON.stringify(students));
+                return students;
+            } catch (error) {
+                console.warn('Revenue students could not be refreshed:', error.message);
+                return getData(STORAGE_KEY_STUDENTS);
+            }
+        }
+
+        async function updateRevenueReport() {
+            const currentMonthMeta = getMonthMetaFromKey(selectedRevenueMonthKey || getCurrentMonthMeta().monthKey);
+            const allStudents = await refreshRevenueStudentsFromBackend();
+            const students = typeof getGlobalCampusFilteredRecords === 'function' ? getGlobalCampusFilteredRecords(allStudents) : allStudents;
+            const salarySummary = getMonthlySalarySummary(currentMonthMeta.monthKey);
+            const paymentResult = await fetchCollectedFeePayments();
+            const feePayments = getRevenueScopedPayments(paymentResult.payments, allStudents);
+            if (!revenueMonthManuallySelected) {
+                const latestMonthKey = getLatestRevenuePaymentMonthKey(feePayments);
+                if (latestMonthKey && latestMonthKey !== selectedRevenueMonthKey) {
+                    selectedRevenueMonthKey = latestMonthKey;
+                    const picker = document.getElementById('revenueMonthPicker');
+                    if (picker) picker.value = latestMonthKey;
+                    return updateRevenueReport();
+                }
+            }
+            renderDailyFeeCollection(feePayments);
+            const monthDisplay = document.getElementById('currentMonthDisplay');
+            if (monthDisplay) monthDisplay.innerText = `${currentMonthMeta.monthName} ${currentMonthMeta.year}`;
+
+            const validFeePayments = feePayments.filter(isRevenueFeePayment);
+            const allMonthsCollected = validFeePayments.reduce((sum, payment) => sum + Math.max(parseRevenueAmount(payment.amount), 0), 0);
+            monthlyStatementRows = buildMonthlyStatement(students, validFeePayments, currentMonthMeta, paymentResult.loaded);
+            renderMonthlyStatementRows();
+
+            const totalExpected = monthlyStatementRows.reduce((sum, row) => sum + Number(row.expected || 0), 0);
+            const totalCollected = monthlyStatementRows.reduce((sum, row) => sum + Number(row.paidAmount || 0), 0);
+            const totalPending = monthlyStatementRows.reduce((sum, row) => sum + Number(row.pendingAmount || 0), 0);
+            const totalRemainingCharges = monthlyStatementRows.reduce((sum, row) => sum + Number(row.remainingCharges || 0), 0);
+            const totalMonthlyPending = monthlyStatementRows.reduce((sum, row) => sum + Number(row.monthlyPending || 0), 0);
+
+            const classCollection = {}; // { className: { expected: 0, collected: 0 } }
+
+            monthlyStatementRows.forEach((row) => {
+                if (!classCollection[row.className]) {
+                    classCollection[row.className] = { expected: 0, collected: 0, pending: 0, remaining: 0 };
+                }
+                classCollection[row.className].expected += Number(row.expected || 0);
+                classCollection[row.className].collected += Number(row.paidAmount || 0);
+                classCollection[row.className].pending += Number(row.pendingAmount || 0);
+                classCollection[row.className].remaining += Number(row.remainingCharges || 0);
+            });
+
+            // Update UI Stats
+            const netExpected = totalExpected - salarySummary.expected;
+            const netCollected = totalCollected - salarySummary.transferred;
+            const remainingBalance = totalPending + salarySummary.pending;
+            const paidBills = getPaidBillsAmount(currentMonthMeta.monthKey);
+            const paidExpenses = salarySummary.transferred + paidBills;
+            const profitLoss = totalCollected - paidExpenses;
+            const monthToDateLabel = getRevenueMonthToDateLabel(currentMonthMeta);
+            const monthToDateCollected = getCollectedRevenueToDate(validFeePayments, currentMonthMeta);
+            const monthToDateBills = getPaidBillsAmountToDate(currentMonthMeta);
+            const monthToDateSalaries = getSalaryTransfersToDate(currentMonthMeta);
+            const monthToDateExpenses = monthToDateBills + monthToDateSalaries;
+            const monthToDateProfitLoss = monthToDateCollected - monthToDateExpenses;
+            const allMonthsSalaries = getAllSalaryTransfers();
+            const allMonthsBills = getPaidBillsAmount();
+            const allMonthsProfitLoss = allMonthsCollected - allMonthsSalaries - allMonthsBills;
+
+            document.getElementById('expectedRevenue').innerText = formatRevenueMoney(totalExpected);
+            document.getElementById('collectedRevenue').innerText = formatRevenueMoney(totalCollected);
+            document.getElementById('pendingRevenue').innerText = formatRevenueMoney(totalPending);
+            document.getElementById('remainingChargesRevenue').innerText = formatRevenueMoney(totalRemainingCharges);
+            document.getElementById('monthlyPendingRevenue').innerText = formatRevenueMoney(totalMonthlyPending);
+            document.getElementById('salaryBudget').innerText = formatRevenueMoney(salarySummary.expected);
+            document.getElementById('transferredSalaries').innerText = formatRevenueMoney(salarySummary.transferred);
+            document.getElementById('pendingSalaries').innerText = formatRevenueMoney(salarySummary.pending);
+            document.getElementById('netExpectedRevenue').innerText = formatRevenueMoney(netExpected);
+            document.getElementById('netCollectedRevenue').innerText = formatRevenueMoney(netCollected);
+            document.getElementById('netPendingRevenue').innerText = formatRevenueMoney(remainingBalance);
+            document.getElementById('paidBillsExpense').innerText = formatRevenueMoney(paidBills);
+            document.getElementById('paidExpensesTotal').innerText = formatRevenueMoney(paidExpenses);
+            document.getElementById('monthToDateRevenue').innerText = formatRevenueMoney(monthToDateCollected);
+            document.getElementById('monthToDateExpenses').innerText = formatRevenueMoney(monthToDateExpenses);
+            document.getElementById('monthToDateRevenueLabel').innerText = `Revenue To Date (${monthToDateLabel})`;
+            document.getElementById('monthToDateExpenseLabel').innerText = `Expenses To Date (${monthToDateLabel})`;
+            document.getElementById('monthToDateProfitLabel').innerText = `Profit / Loss To Date (${monthToDateLabel})`;
+            document.getElementById('allMonthsRevenue').innerText = formatRevenueMoney(allMonthsCollected);
+            document.getElementById('allMonthsSalaries').innerText = formatRevenueMoney(allMonthsSalaries);
+            document.getElementById('allMonthsBills').innerText = formatRevenueMoney(allMonthsBills);
+            setProfitLossValue('profitLossRevenue', profitLoss);
+            setProfitLossValue('monthToDateProfitLoss', monthToDateProfitLoss);
+            setProfitLossValue('allMonthsProfitLoss', allMonthsProfitLoss);
+
+            // Render Class Bars (sorted by class order)
+            const barContainer = document.getElementById('classBreakdownContainer');
+            barContainer.innerHTML = '';
+
+            // Sort classes in proper order (Montessori -> O Level)
+            const sortedClasses = feeClasses
+                .map(c => c.name)
+                .filter(name => classCollection[name] && classCollection[name].expected > 0);
+            const customClasses = Object.keys(classCollection)
+                .filter(name => !sortedClasses.includes(name) && classCollection[name].expected > 0)
+                .sort((a, b) => {
+                    if (typeof compareStudentClassNames === 'function') return compareStudentClassNames(a, b);
+                    return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+                });
+            const displayClasses = [...sortedClasses, ...customClasses];
+
+            if (displayClasses.length === 0) {
+                barContainer.innerHTML = '<p style="text-align: center; padding: 2rem; color: var(--text-secondary);">No revenue data available for this month.</p>';
+            } else {
+                displayClasses.forEach(className => {
+                    const data = classCollection[className];
+                    const pct = data.expected > 0 ? (data.collected / data.expected) * 100 : 0;
+
+                    const row = document.createElement('div');
+                    row.className = 'bar-row';
+                    row.innerHTML = `
+                        <div class="bar-label">
+                            <span class="class-name">${className}</span>
+                            <span class="amount-display">${formatRevenueMoney(data.collected)} / ${formatRevenueMoney(data.expected)} | Pending ${formatRevenueMoney(data.pending)} | Remaining ${formatRevenueMoney(data.remaining)}</span>
+                        </div>
+                        <div class="bar-bg">
+                            <div class="bar-fill" style="width: ${pct}%"></div>
+                        </div>
+                    `;
+                    barContainer.appendChild(row);
+                });
+            }
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function renderMonthlyStatementRows() {
+            const tbody = document.getElementById('monthlyStatementBody');
+            if (!tbody) return;
+            const term = String(document.getElementById('monthlyStatementSearch')?.value || '').trim().toLowerCase();
+            const rows = monthlyStatementRows.filter((row) => {
+                if (!term) return true;
+                return `${row.studentName} ${row.rawClass} ${row.className} ${row.rollNo} ${row.campusName} ${row.status}`.toLowerCase().includes(term);
+            });
+            const paidRows = rows.filter((row) => row.status === 'Paid' || row.status === 'Partial');
+            const pendingRows = rows.filter((row) => row.pendingAmount > 0);
+            const pendingAmount = rows.reduce((sum, row) => sum + Number(row.pendingAmount || 0), 0);
+            const monthLabel = getMonthMetaFromKey(selectedRevenueMonthKey || getCurrentMonthMeta().monthKey);
+
+            const meta = document.getElementById('monthlyStatementMeta');
+            if (meta) {
+                meta.textContent = `${monthLabel.monthName} ${monthLabel.year} | Expected ${formatRevenueMoney(rows.reduce((sum, row) => sum + row.expected, 0))} | Collected ${formatRevenueMoney(rows.reduce((sum, row) => sum + row.paidAmount, 0))}`;
+            }
+            document.getElementById('statementStudentTotal').textContent = String(rows.length);
+            document.getElementById('statementPaidTotal').textContent = String(paidRows.length);
+            document.getElementById('statementPendingTotal').textContent = String(pendingRows.length);
+            document.getElementById('statementPendingAmount').textContent = formatRevenueMoney(pendingAmount);
+
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; color:var(--text-secondary);">No statement records found for selected filters.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = rows
+                .sort((a, b) => {
+                    const classCompare = typeof compareStudentClassNames === 'function'
+                        ? compareStudentClassNames(a.className, b.className)
+                        : a.className.localeCompare(b.className, undefined, { numeric: true, sensitivity: 'base' });
+                    return classCompare || a.studentName.localeCompare(b.studentName);
+                })
+                .map((row) => {
+                    const statusClass = row.status.toLowerCase();
+                    return `
+                        <tr>
+                            <td><strong>${escapeHtml(row.studentName)}</strong></td>
+                            <td>${escapeHtml(row.rawClass)}</td>
+                            <td>${escapeHtml(row.rollNo)}</td>
+                            <td>${escapeHtml(row.campusName)}</td>
+                            <td><span class="statement-status ${statusClass}">${escapeHtml(row.status)}</span></td>
+                            <td>${escapeHtml(row.paidDate)}</td>
+                            <td>${formatRevenueMoney(row.monthlyFee)}</td>
+                            <td>${formatRevenueMoney(row.remainingCharges)}</td>
+                            <td>${formatRevenueMoney(row.expected)}</td>
+                            <td>${formatRevenueMoney(row.paidAmount)}</td>
+                            <td>${formatRevenueMoney(row.pendingAmount)}</td>
+                        </tr>
+                    `;
+                }).join('');
+        }
+
+        function renderDailyFeeCollection(feePayments = []) {
+            const tbody = document.getElementById('dailyRevenueTableBody');
+            const meta = document.getElementById('dailyRevenueMeta');
+            const totalEl = document.getElementById('dailyRevenueTotal');
+            if (!tbody) return;
+
+            const dateKey = selectedRevenueDateKey || getTodayDateKey();
+            const classMap = new Map();
+
+            feePayments.forEach((payment) => {
+                if (!payment) return;
+                if (!isRevenueFeePayment(payment)) return;
+                if (normalizeRevenueDateKey(payment.paidAt || payment.paymentDateLabel || payment.createdAt) !== dateKey) return;
+                const amount = parseRevenueAmount(payment.amount);
+                if (!(amount > 0)) return;
+                const className = getStandardClassName(payment.classGrade || 'Unassigned');
+                const previous = classMap.get(className) || { className, amount: 0, payments: 0, studentIds: new Set() };
+                previous.amount += amount;
+                previous.payments += 1;
+                if (payment.studentId) previous.studentIds.add(String(payment.studentId));
+                classMap.set(className, previous);
+            });
+
+            const sortedClasses = feeClasses
+                .map((item) => item.name)
+                .filter((className) => classMap.has(className));
+            const customClasses = Array.from(classMap.keys())
+                .filter((className) => !sortedClasses.includes(className))
+                .sort((a, b) => {
+                    if (typeof compareStudentClassNames === 'function') return compareStudentClassNames(a, b);
+                    return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+                });
+            dailyRevenueRows = [...sortedClasses, ...customClasses].map((className) => {
+                const row = classMap.get(className);
+                return {
+                    className,
+                    studentsPaid: row.studentIds.size,
+                    payments: row.payments,
+                    amount: row.amount
+                };
+            });
+            dailyRevenueTotalAmount = dailyRevenueRows.reduce((sum, row) => sum + row.amount, 0);
+
+            if (meta) {
+                meta.textContent = `Date: ${formatRevenueDateLabel(dateKey)} | Classes: ${dailyRevenueRows.length}`;
+            }
+            if (totalEl) totalEl.textContent = formatRevenueMoney(dailyRevenueTotalAmount);
+
+            if (!dailyRevenueRows.length) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-secondary);">No fee collection found for ${formatRevenueDateLabel(dateKey)}.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = dailyRevenueRows.map((row) => `
+                <tr>
+                    <td><strong>${escapeHtml(row.className)}</strong></td>
+                    <td>${row.studentsPaid}</td>
+                    <td>${row.payments}</td>
+                    <td>${formatRevenueMoney(row.amount)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function printDailyRevenueReport() {
+            const dateKey = selectedRevenueDateKey || getTodayDateKey();
+            const schoolName = (() => {
+                try {
+                    const settings = JSON.parse(localStorage.getItem('eduCore_settings') || '{}') || {};
+                    return String(settings.schoolName || settings.schoolTitle || 'Aspire Group of Colleges').trim() || 'Aspire Group of Colleges';
+                } catch (_error) {
+                    return 'Aspire Group of Colleges';
+                }
+            })();
+            const printedAt = new Date().toLocaleString();
+            const rowsMarkup = dailyRevenueRows.length ? dailyRevenueRows.map((row, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${escapeHtml(row.className)}</td>
+                    <td>${row.studentsPaid}</td>
+                    <td>${row.payments}</td>
+                    <td>${formatRevenueMoney(row.amount)}</td>
+                </tr>
+            `).join('') : `<tr><td colspan="5" class="empty">No fee collection found for ${formatRevenueDateLabel(dateKey)}.</td></tr>`;
+
+            const html = `
+                <!doctype html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <title>${escapeHtml(schoolName)} - Daily Revenue</title>
+                    <style>
+                        @page { size: A4; margin: 12mm; }
+                        body { font-family: Arial, sans-serif; color: #111827; margin: 0; }
+                        .head { display: flex; justify-content: space-between; gap: 16px; align-items: center; border-bottom: 2px solid #111827; padding-bottom: 12px; margin-bottom: 16px; }
+                        h1 { margin: 0; font-size: 22px; }
+                        p { margin: 4px 0 0; color: #475569; font-size: 12px; }
+                        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                        th, td { border: 1px solid #94a3b8; padding: 8px; text-align: left; }
+                        th { background: #f1f5f9; text-transform: uppercase; font-size: 11px; }
+                        td:last-child, th:last-child { text-align: right; font-weight: 700; }
+                        .total { margin-top: 14px; text-align: right; font-size: 15px; font-weight: 800; }
+                        .empty { text-align: center; color: #64748b; }
+                    </style>
+                </head>
+                <body>
+                    <section class="head">
+                        <div>
+                            <h1>${escapeHtml(schoolName)}</h1>
+                            <p>Daily Fee Collection by Class</p>
+                            <p>Date: ${escapeHtml(formatRevenueDateLabel(dateKey))}</p>
+                        </div>
+                        <p>Printed: ${escapeHtml(printedAt)}</p>
+                    </section>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Class</th>
+                                <th>Students Paid</th>
+                                <th>Payments</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsMarkup}</tbody>
+                    </table>
+                    <div class="total">Total: ${formatRevenueMoney(dailyRevenueTotalAmount)}</div>
+                    <script>
+                        window.focus();
+                        window.print();
+                        window.onafterprint = () => window.close();
+                    <\/script>
+                </body>
+                </html>
+            `;
+
+            const printWindow = window.open('', 'eduCoreDailyRevenuePrint', 'width=1000,height=720');
+            if (!printWindow) {
+                alert('Popup blocked. Please allow popups to print the revenue report.');
+                return;
+            }
+            printWindow.document.open();
+            printWindow.document.write(html);
+            printWindow.document.close();
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,11 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/apexium2/social-purple-mammoth.37-27-52-96.cpanel.site
+    - /bin/mkdir -p "$DEPLOYPATH/.deploy-backup"
+    - /bin/mkdir -p "$DEPLOYPATH/data"
+    - for file in .env data/permissions.json data/date_sheet.json data/admin_credentials.json; do if [ -f "$DEPLOYPATH/$file" ]; then /bin/mkdir -p "$DEPLOYPATH/.deploy-backup/$(dirname "$file")"; /bin/cp "$DEPLOYPATH/$file" "$DEPLOYPATH/.deploy-backup/$file"; fi; done
+    - /bin/cp -R * "$DEPLOYPATH"
+    - for file in .env data/permissions.json data/date_sheet.json data/admin_credentials.json; do if [ -f "$DEPLOYPATH/.deploy-backup/$file" ]; then /bin/mkdir -p "$DEPLOYPATH/$(dirname "$file")"; /bin/cp "$DEPLOYPATH/.deploy-backup/$file" "$DEPLOYPATH/$file"; fi; done
+    - /bin/mkdir -p "$DEPLOYPATH/tmp"
+    - /usr/bin/touch "$DEPLOYPATH/tmp/restart.txt"
