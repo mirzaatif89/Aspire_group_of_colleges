@@ -1,19 +1,20 @@
 const menuButton = document.querySelector('.menu');
 const navigation = document.querySelector('.navlinks');
-menuButton.addEventListener('click', () => {
-  const open = navigation.classList.toggle('open');
-  menuButton.setAttribute('aria-expanded', String(open));
-});
-navigation.querySelectorAll('a').forEach(link => link.addEventListener('click', () => {
-  navigation.classList.remove('open');
-  menuButton.setAttribute('aria-expanded', 'false');
-}));
-document.addEventListener('keydown', event => {
-  if (event.key === 'Escape') {
+if (menuButton && navigation) {
+  menuButton.addEventListener('click', () => {
+    const open = navigation.classList.toggle('open');
+    menuButton.setAttribute('aria-expanded', String(open));
+  });
+  navigation.querySelectorAll('a').forEach(link => link.addEventListener('click', () => {
     navigation.classList.remove('open');
     menuButton.setAttribute('aria-expanded', 'false');
-  }
-});
+  }));
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape') return;
+    navigation.classList.remove('open');
+    menuButton.setAttribute('aria-expanded', 'false');
+  });
+}
 
 // Keep the supplied banner visible even when the database is unavailable.
 async function loadSchoolBanners() {
@@ -24,6 +25,7 @@ async function loadSchoolBanners() {
     const banners = (Array.isArray(data.banners) ? data.banners : [])
       .filter(banner => banner.isActive !== false && banner.imageUrl);
     const container = document.querySelector('.additional-banners');
+    if (!container) return;
     for (const banner of banners) {
       const url = new URL(banner.imageUrl, window.location.origin);
       if (!['http:', 'https:'].includes(url.protocol)) continue;
@@ -37,3 +39,13 @@ async function loadSchoolBanners() {
   } catch (_) { /* Static school content remains available offline. */ }
 }
 loadSchoolBanners();
+
+const enquiryForm = document.querySelector('.enquiry-form');
+if (enquiryForm) {
+  enquiryForm.addEventListener('submit', event => {
+    event.preventDefault();
+    const note = enquiryForm.querySelector('.form-note');
+    if (note) note.textContent = 'Thank you — our admission team will contact you shortly.';
+    enquiryForm.reset();
+  });
+}

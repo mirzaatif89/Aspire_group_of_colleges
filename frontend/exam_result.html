@@ -484,7 +484,7 @@
                         </div>
                         <div class="result-schedule-fields">
                             <label>Campus<select id="resultScheduleCampus"><option value="">Select campus</option><option value="Main Campus">Main Campus</option></select></label>
-                            <label>Class<select id="resultScheduleClass"><option value="">Select class</option><option>Play Group</option><option>Nursery</option><option>Prep</option><option>Class 1</option><option>Class 2</option><option>Class 3</option><option>Class 4</option><option>Class 5</option><option>Class 6</option><option>Class 7</option><option>Class 8</option><option>Class 9</option><option>Class 10</option><option>Graduate</option></select></label>
+                            <label>Class<select id="resultScheduleClass"><option value="">Select class</option><option>Pre 9th</option><option>9th</option><option>Ten</option><option>First Year</option><option>Second Year</option><option>Graduate</option></select></label>
                             <label>Result Year<select id="resultScheduleYear"><option>2026</option><option>2025</option><option>2024</option><option>2023</option><option>2022</option><option>2021</option><option>2020</option><option>2019</option><option>2018</option><option>2017</option><option>2016</option></select></label>
                             <label>Result Type<select id="resultScheduleType"><option>First Term</option><option>Mid Term</option><option>Third Term</option><option>Final</option></select></label>
                             <label>Show On Portal From<input type="date" id="resultPublishDate"></label>
@@ -2554,11 +2554,7 @@
                 if (Array.isArray(payload)) savedClasses = payload.map((item) => item?.name || item?.className || item?.classGrade || '').filter(Boolean);
             } catch (_error) { /* Use student class values as a fallback. */ }
 
-            const classes = getUniqueValues([
-                ...savedClasses,
-                ...students.map(getStudentClass),
-                'Play Group', 'Nursery', 'Prep', ...Array.from({ length: 10 }, (_, index) => `Class ${index + 1}`), 'Graduate'
-            ]);
+            const classes = getUniqueValues(['Pre 9th', '9th', 'Ten', 'First Year', 'Second Year', 'Graduate']);
             campuses = getUniqueValues(['Main Campus', ...campuses, ...students.map(getStudentCampus)]);
             RESULT_SCHEDULER_CLASS_OPTIONS = classes;
             RESULT_SCHEDULER_CAMPUS_OPTIONS = campuses;

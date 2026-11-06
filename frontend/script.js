@@ -51,19 +51,11 @@ const DASHBOARD_CAMPUS_FILTER_KEY = 'eduCore_dashboard_campus_filter';
 const GLOBAL_CAMPUS_FILTER_KEY = DASHBOARD_CAMPUS_FILTER_KEY;
 const DEFAULT_CAMPUS_NAMES = ['Main Campus'];
 const DEFAULT_STUDENT_CLASS_ORDER = [
-    'Play Group',
-    'Nursarry',
-    'Prep',
-    'Class One',
-    'Class Two',
-    'Class Three',
-    'Class Four',
-    'Class Five',
-    'Class Six',
-    'Class Seven',
-    'Class Eight',
-    'Class Nine',
-    'Class Ten',
+    'Pre 9th',
+    '9th',
+    'Ten',
+    'First Year',
+    'Second Year',
     'Graduate'
 ];
 const SCHOOL_EXAM_TYPES = Object.freeze(['First Term', 'Mid Term', 'Third Term', 'Final']);
@@ -1512,11 +1504,7 @@ function normalizeTeacherSchedule(schedule) {
     return [];
 }
 
-const DEFAULT_TEACHER_SCHEDULE_CLASSES = [
-    'Play Group', 'Nursarry', 'Prep',
-    'Class One', 'Class Two', 'Class Three', 'Class Four', 'Class Five',
-    'Class Six', 'Class Seven', 'Class Eight', 'Class Nine', 'Class Ten', 'Graduate'
-];
+const DEFAULT_TEACHER_SCHEDULE_CLASSES = ['Pre 9th', '9th', 'Ten', 'First Year', 'Second Year', 'Graduate'];
 
 function splitTeacherClassAndSection(classGrade = '', section = '') {
     const suppliedSection = String(section || '').trim();
@@ -7148,8 +7136,8 @@ function getStudentQuickFilterClassLabel(className) {
         'grade 6th': 'Class Six', 'grade 6': 'Class Six', 'class 6': 'Class Six',
         'grade 7th': 'Class Seven', 'grade 7': 'Class Seven', 'class 7': 'Class Seven',
         'grade 8th': 'Class Eight', 'grade 8': 'Class Eight', 'class 8': 'Class Eight',
-        'grade 9th': 'Class Nine', 'grade 9': 'Class Nine', 'class 9': 'Class Nine', 'class nine': 'Class Nine',
-        'grade 10th': 'Class Ten', 'grade 10': 'Class Ten', 'class 10': 'Class Ten', 'class ten': 'Class Ten',
+        'grade 9th': '9th', 'grade 9': '9th', 'class 9': '9th', 'class nine': '9th', 'nine': '9th', '9': '9th',
+        'grade 10th': 'Ten', 'grade 10': 'Ten', 'class 10': 'Ten', 'class ten': 'Ten', '10th': 'Ten', '10': 'Ten',
         'graduate': 'Graduate', 'graduated': 'Graduate', 'alumni': 'Graduate'
     };
     if (classAliases[normalized]) return classAliases[normalized];

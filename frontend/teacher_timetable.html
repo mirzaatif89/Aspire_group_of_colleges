@@ -322,11 +322,7 @@
             }
         }
 
-        const DEFAULT_TIMETABLE_CLASSES = [
-            'Play Group', 'Nursarry', 'Prep',
-            'Class One', 'Class Two', 'Class Three', 'Class Four', 'Class Five',
-            'Class Six', 'Class Seven', 'Class Eight', 'Class Nine', 'Class Ten', 'Graduate'
-        ];
+        const DEFAULT_TIMETABLE_CLASSES = ['Pre 9th', '9th', 'Ten', 'First Year', 'Second Year', 'Graduate'];
 
         function escapeTimetableText(value) {
             return String(value ?? '').replace(/[&<>"']/g, (character) => ({

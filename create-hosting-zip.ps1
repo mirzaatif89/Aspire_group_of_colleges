@@ -14,6 +14,8 @@ if (Test-Path $outputPath) {
 
 $excludePrefixes = @(
     ".agents/",
+    ".chrome-",
+    ".qa-",
     ".codex/",
     ".git/",
     ".github/",
@@ -26,6 +28,8 @@ $excludePrefixes = @(
     "docs/",
     "data/",
     "node_modules/",
+    "qa_",
+    "qa-",
     "tools/"
 )
 
@@ -46,6 +50,7 @@ $filesToPack = $allFiles | Where-Object {
     }
 
     if ($relative -eq $Output) { return $false }
+    if ($relative -like "*-preview*.png" -or $relative -like "*-responsive.png") { return $false }
     if ($relative -in @(".env", "hostinger.env", ".cpanel.yml", "vercel.json", ".vercelignore", "README.md")) { return $false }
     if ($_.Extension -ieq ".zip") { return $false }
     if ($_.Extension -ieq ".log") { return $false }

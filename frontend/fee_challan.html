@@ -1453,7 +1453,7 @@
                                 </div>
                                 <div class="field-block">
                                     <label for="studentClass">Class / Section</label>
-                                    <input type="text" id="studentClass" placeholder="Nursarry">
+                                    <input type="text" id="studentClass" placeholder="Pre 9th">
                                 </div>
                                 <div class="field-block">
                                     <label for="studentRollNo">Student ID</label>
@@ -1661,11 +1661,7 @@
         let classPopupLastVisibleStudentIds = [];
         let challanSelectedFeeMonths = [];
         const CHALLAN_FALLBACK_CAMPUSES = ['Jand'];
-        const CHALLAN_FALLBACK_CLASSES = [
-            'Play Group', 'Nursarry', 'Prep',
-            'Class One', 'Class Two', 'Class Three', 'Class Four', 'Class Five',
-            'Class Six', 'Class Seven', 'Class Eight', 'Class Nine', 'Class Ten', 'Graduate'
-        ];
+        const CHALLAN_FALLBACK_CLASSES = ['Pre 9th', '9th', 'Ten', 'First Year', 'Second Year', 'Graduate'];
 
         document.addEventListener('DOMContentLoaded', () => {
             initializeChallanPage();
