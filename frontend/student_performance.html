@@ -29,9 +29,8 @@
         .performance-heading{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}
         .performance-heading h2{margin:0}
         .subject-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
-        .marks-table-wrap{overflow:auto;border:1px solid #dcebe5;border-radius:10px;background:#fff}.marks-table{width:100%;min-width:850px;border-collapse:collapse}.marks-table th,.marks-table td{padding:10px;border-bottom:1px solid #e3eee9;text-align:left}.marks-table th{background:#f5faf7;color:#426554;font-size:.78rem;text-transform:uppercase}.marks-table input{width:100%;min-width:90px;box-sizing:border-box;border:1px solid #cbded5;border-radius:7px;padding:8px;font:inherit}.marks-table .subject-name{font-weight:800;color:#153d2e}.marks-row-save{white-space:nowrap}
+        .marks-table-wrap{overflow:auto;border:1px solid #dcebe5;border-radius:10px;background:#fff}.marks-table{width:100%;min-width:850px;border-collapse:collapse}.marks-table th,.marks-table td{padding:10px;border-bottom:1px solid #e3eee9;text-align:left}.marks-table th{background:#f5faf7;color:#426554;font-size:.78rem;text-transform:uppercase}.marks-table input{width:100%;min-width:90px;box-sizing:border-box;border:1px solid #cbded5;border-radius:7px;padding:8px;font:inherit}.marks-table .subject-name{font-weight:800;color:#153d2e}.marks-table .total-marks[readonly]{background:#f0f7f3;color:#315d4a;font-weight:800}.marks-table .grade-output{font-weight:800;color:#176b4a}
         .marks-table .all-subjects-total th{background:#e8f5ee;color:#153d2e;font-size:.88rem;font-weight:900;text-transform:none;border-top:2px solid #35a56e}
-        .marks-delete-button{margin-left:6px;background:#fff1f2!important;color:#be123c!important;border:1px solid #fecdd3!important}
         .subject-card{border:1px solid #d7e7e0;border-radius:10px;background:#fbfefd;padding:14px;text-align:left;cursor:pointer;font:inherit;color:#24483a}
         .subject-card:hover{border-color:#35a56e;background:#effaf4}
         .subject-card strong{display:block;margin-bottom:4px}
@@ -91,7 +90,7 @@
     <aside class="sidebar"><div class="logo-section"><img class="sidebar-logo-img" src="images/logo.png" alt="Aspire Group of Colleges logo"></div><nav class="nav-links"></nav><a href="settings.html" class="user-profile"><div class="avatar">A</div><div class="user-info"><h4>Administrator</h4><p>Admin</p></div></a></aside>
     <main class="main-content">
         <a class="back-link" href="student_scheduling.html"><i data-lucide="arrow-left" width="18"></i> Back to Student Scheduling</a>
-        <header class="header"><div><h1>Student Exams</h1><p style="color:var(--text-secondary);margin-top:.3rem">Select a student, exam year, and enter subject marks and grades.</p></div></header>
+        <header class="header"><div><h1>Student Exams</h1><p style="color:var(--text-secondary);margin-top:.3rem">Save total marks once for each class and exam, then enter only obtained marks for every student.</p></div></header>
         <div class="performance-steps"><div class="performance-step active" id="stepClass">1. Select Class<select class="step-select" id="classStepSelect"><option value="">Select Class</option></select><select class="step-select" id="sectionStepSelect" disabled><option value="">Select Section</option></select></div><div class="performance-step" id="stepStudent">2. Select Student<select class="step-select" id="studentStepSelect" disabled><option value="">Select Student</option></select></div><div class="performance-step" id="stepSubjects" hidden><select class="step-select" id="subjectStepSelect" disabled><option value="">Select Subject</option></select></div><div class="performance-step" id="stepSkills" hidden></div></div>
         <section class="performance-layout">
             <div class="performance-panel"><h2 id="choiceTitle">Select Class</h2><select class="class-select" id="choiceList"><option value="">Loading classes...</option></select></div>
@@ -108,9 +107,13 @@
     const token = sessionStorage.getItem('eduCore_token') || '';
     const headers = () => ({ 'Content-Type':'application/json', ...(token ? { Authorization:`Bearer ${token}` } : {}) });
     const PERFORMANCE_CACHE_KEY = 'eduCore_student_skill_performance';
+    const CLASS_SUBJECT_TOTALS_CACHE_KEY = 'eduCore_class_subject_totals';
+    const CLASS_SUBJECT_TOTAL_RECORD_TYPE = '__class_subject_total__';
     const canonicalClasses = ['Pre 9th', '9th', 'Ten', 'First Year', 'Second Year', 'Graduate'];
-    const juniorSubjects = ['English','Urdu','Mathematics','Science','Social Study','Islamiyat','Nazra','Math'];
-    const seniorSubjects = ['English','Urdu','Mathematics','Science','Social Study','Islamiyat','Nazra','Math'];
+    const juniorSubjects = ['English','Urdu','Mathematics','Science','Social Study','Islamiyat','Nazra'];
+    const seniorSubjects = ['English','Urdu','Mathematics','Science','Social Study','Islamiyat','Nazra'];
+    const gradeNineSubjects = [...seniorSubjects, 'Physics', 'Chemistry', 'Biology', 'Computer'];
+    const gradeTenSubjects = [...seniorSubjects, 'Physics', 'Chemistry', 'Biology', 'Computer'];
     const ratings = ['Excellent','Satisfactory','Needs Practice'];
     const rubricSuggestions = {
         modalExcellent: [
@@ -144,6 +147,11 @@
     let selectedExamYear = String(new Date().getFullYear());
     let selectedSection = 'Portfolio Skills Assessment Summary';
     let saved = [];
+    let classSubjectTotals = [];
+    let totalMarksEditing = false;
+    // Keep marks typed while totals are being configured. Saving the shared totals
+    // redraws this editor, so without a small in-memory draft those values vanish.
+    const obtainedMarksDrafts = new Map();
     let attendanceStore = {};
     let examResults = [];
     let teacherAssignedSubjects = null;
@@ -166,6 +174,13 @@
     }
     const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const norm = value => String(value || '').trim().toLowerCase().replace(/\s+/g,' ');
+    const subjectKey = value => {
+        const key = norm(value);
+        return key === 'math' ? 'mathematics' : key;
+    };
+    const canonicalSubject = value => subjectKey(value) === 'mathematics' ? 'Mathematics' : String(value || '').trim();
+    const isGradeNine = value => ['9', '9th', 'nine', 'class 9', 'class nine', 'grade 9', 'grade nine'].includes(norm(value));
+    const isGradeTen = value => ['10', '10th', 'ten', 'class 10', 'class ten', 'grade 10', 'grade ten'].includes(norm(value));
     const examTypeName = value => typeof normalizeSchoolExamType === 'function' ? normalizeSchoolExamType(value) : String(value || 'Mid Term').trim();
     function assignmentSubjects(assignment = {}) {
         const values = assignment.assignedSubjects || assignment.subjects || assignment.subject || '';
@@ -179,7 +194,7 @@
             if (assignedSection && assignedSection !== 'general' && assignedSection !== norm(section || 'General')) return false;
             const subjects = assignmentSubjects(assignment);
             const permittedSubjects = subjects.length ? subjects : (teacherAssignedSubjects || []);
-            return permittedSubjects.length > 0 && (!subject || permittedSubjects.some(value => norm(value) === norm(subject)));
+            return permittedSubjects.length > 0 && (!subject || permittedSubjects.some(value => subjectKey(value) === subjectKey(subject)));
         });
     }
     function teacherStudentIsAssigned(student) {
@@ -195,8 +210,41 @@
     };
     const thisMonth = () => today().slice(0, 7);
     const performanceIdFor = record => String(record.id || `PERF-${record.studentId}-${record.subject}-${record.examType || 'Mid Term'}-${record.performanceDate}-${record.skill || 'summary'}`).replace(/[^a-zA-Z0-9_-]+/g, '-').slice(0, 255);
-    const subjectMarksId = (subject, examType = selectedExamType, examYear = selectedExamYear) => `MARKS-${selectedStudent?.id || 'student'}-${subject}-${examType}-${examYear}`.replace(/[^a-zA-Z0-9_-]+/g, '-').slice(0, 255);
-    function subjectMarksRecord(subject, examType = selectedExamType, examYear = selectedExamYear) { return saved.find(record => record.skill === '__subject_marks__' && norm(record.subject) === norm(subject) && norm(examTypeName(record.examType || 'Mid Term')) === norm(examTypeName(examType)) && String(record.examYear || new Date(record.performanceDate || '').getFullYear()) === String(examYear)) || {}; }
+    const subjectMarksId = (subject, examType = selectedExamType, examYear = selectedExamYear) => `MARKS-${selectedStudent?.id || 'student'}-${canonicalSubject(subject)}-${examType}-${examYear}`.replace(/[^a-zA-Z0-9_-]+/g, '-').slice(0, 255);
+    const obtainedMarksDraftId = (subject, examType = selectedExamType, examYear = selectedExamYear) => [selectedStudent?.id || '', canonicalSubject(subject), examTypeName(examType), examYear].map(norm).join('|');
+    const classSubjectTotalId = (subject, examType = selectedExamType, examYear = selectedExamYear) => `TOTAL-${selectedClass}-${canonicalSubject(subject)}-${examTypeName(examType)}-${examYear}`.replace(/[^a-zA-Z0-9_-]+/g, '-').slice(0, 255);
+    function subjectMarksRecord(subject, examType = selectedExamType, examYear = selectedExamYear) { return saved.find(record => record.skill === '__subject_marks__' && subjectKey(record.subject) === subjectKey(subject) && norm(examTypeName(record.examType || 'Mid Term')) === norm(examTypeName(examType)) && String(record.examYear || new Date(record.performanceDate || '').getFullYear()) === String(examYear)) || {}; }
+    function isClassSubjectTotal(record = {}) { return String(record.recordType || '') === CLASS_SUBJECT_TOTAL_RECORD_TYPE; }
+    function classSubjectTotalRecord(subject, examType = selectedExamType, examYear = selectedExamYear) {
+        return classSubjectTotals.find(record => isClassSubjectTotal(record)
+            && norm(record.classGrade) === norm(selectedClass)
+            && subjectKey(record.subject) === subjectKey(subject)
+            && norm(examTypeName(record.examType || 'Mid Term')) === norm(examTypeName(examType))
+            && String(record.examYear || '') === String(examYear || '')) || {};
+    }
+    function hasSharedTotal(subject, examType = selectedExamType, examYear = selectedExamYear) { return Number(classSubjectTotalRecord(subject, examType, examYear).totalMarks) > 0; }
+    function sharedTotalValue(subject, examType = selectedExamType, examYear = selectedExamYear) {
+        const configured = classSubjectTotalRecord(subject, examType, examYear);
+        if (Number(configured.totalMarks) > 0) return configured.totalMarks;
+        return subjectMarksRecord(subject, examType, examYear).totalMarks ?? '';
+    }
+    function readLocalClassSubjectTotals() {
+        try {
+            const records = JSON.parse(localStorage.getItem(CLASS_SUBJECT_TOTALS_CACHE_KEY) || '[]');
+            return Array.isArray(records) ? records.filter(isClassSubjectTotal) : [];
+        } catch (_error) { return []; }
+    }
+    function storeLocalClassSubjectTotals(records = []) {
+        localStorage.setItem(CLASS_SUBJECT_TOTALS_CACHE_KEY, JSON.stringify(Array.isArray(records) ? records : []));
+    }
+    function mergeClassSubjectTotals(primary = [], fallback = []) {
+        const merged = new Map();
+        [...fallback, ...primary].filter(isClassSubjectTotal).forEach(record => {
+            const key = String(record.id || classSubjectTotalId(record.subject, record.examType, record.examYear));
+            merged.set(key, { ...record, id: key });
+        });
+        return [...merged.values()];
+    }
     function gradeForPercentage(percentage) { if (percentage >= 90) return 'A+'; if (percentage >= 80) return 'A'; if (percentage >= 70) return 'B'; if (percentage >= 60) return 'C'; if (percentage >= 50) return 'D'; return 'F'; }
 
     function getLocalPerformanceRecords(studentId = '') {
@@ -254,19 +302,27 @@
         ].filter(Boolean);
         const titles = [
             ...scheduledTitles,
+            ...classSubjectTotals.filter(record => isClassSubjectTotal(record) && norm(record.classGrade) === norm(selectedClass)).map(record => String(record.subject || '').trim()),
             ...saved.map(record => String(record.subject || '').trim())
         ].filter(value => value && !excludedReportSubjects.has(norm(value)));
-        const fixedSubjects = ['Play Group','Nursarry','Prep'].some(name => norm(name) === norm(selectedClass)) ? juniorSubjects : seniorSubjects;
-        const baseSubjects = [...new Map([...(scheduledTitles.length ? [] : fixedSubjects), ...assignedToStudent, ...titles].map(value => [norm(value), value])).values()];
+        const fixedSubjects = ['Play Group','Nursarry','Prep'].some(name => norm(name) === norm(selectedClass))
+            ? juniorSubjects
+            : isGradeNine(selectedClass)
+                ? gradeNineSubjects
+                : isGradeTen(selectedClass)
+                    ? gradeTenSubjects
+                    : seniorSubjects;
+        const baseSubjects = [...new Map([...fixedSubjects, ...assignedToStudent, ...titles]
+            .map(value => [subjectKey(value), canonicalSubject(value)])) .values()];
         if (teacherEmbedded) {
             const scopedAssignments = teacherAssignments.filter(item => norm(item.className || item.classGrade) === norm(selectedClass)
                 && (!String(item.section || '').trim() || norm(item.section) === norm(selectedStudentSection || 'General') || norm(item.section) === 'general'));
             const explicitSubjects = [...new Set(scopedAssignments.flatMap(assignmentSubjects))];
             const scopedSubjects = explicitSubjects.length ? explicitSubjects : teacherAssignedSubjects || [];
-            return baseSubjects.filter(subject => scopedSubjects.some(assigned => norm(assigned) === norm(subject)));
+            return baseSubjects.filter(subject => scopedSubjects.some(assigned => subjectKey(assigned) === subjectKey(subject)));
         }
         if (Array.isArray(teacherAssignedSubjects)) {
-            return baseSubjects.filter(subject => teacherAssignedSubjects.some(assigned => norm(assigned) === norm(subject)));
+            return baseSubjects.filter(subject => teacherAssignedSubjects.some(assigned => subjectKey(assigned) === subjectKey(subject)));
         }
         return baseSubjects;
     }
@@ -299,6 +355,8 @@
         selectedStudent = null;
         selectedSubject = '';
         saved = [];
+        classSubjectTotals = readLocalClassSubjectTotals();
+        totalMarksEditing = false;
         setSteps(2);
         renderClasses();
         const list = students.filter(student => norm(student.classGrade) === norm(name) && norm(student.section || 'General') === norm(selectedStudentSection || 'General') && teacherStudentIsAssigned(student));
@@ -321,15 +379,22 @@
         setSteps(3);
         workspace.innerHTML = '<div class="empty-state">Loading subjects...</div>';
         saved = getLocalPerformanceRecords(id);
+        classSubjectTotals = readLocalClassSubjectTotals();
+        totalMarksEditing = false;
         try {
             const response = await fetch(`${apiBase}/student-results?studentId=${encodeURIComponent(id)}`, { headers: headers() });
             const result = await response.json();
             if (!response.ok || !result.success) throw new Error(result.message || 'Exam marks could not be loaded.');
-            const markRows = (result.results || []).filter(record => record.subject && record.obtainedMarks !== '' && record.obtainedMarks != null).map(record => ({ ...record, examType: examTypeName(record.examType || record.termTitle || record.examName || 'Mid Term'), examYear: String(record.examYear || record.session || ''), skill: '__subject_marks__' }));
+            const allResults = Array.isArray(result.results) ? result.results : [];
+            classSubjectTotals = mergeClassSubjectTotals(allResults.filter(isClassSubjectTotal), classSubjectTotals);
+            storeLocalClassSubjectTotals(classSubjectTotals);
+            const markRows = allResults
+                .filter(record => !isClassSubjectTotal(record) && String(record.studentId || '') === String(id) && record.subject && record.obtainedMarks !== '' && record.obtainedMarks != null)
+                .map(record => ({ ...record, examType: examTypeName(record.examType || record.termTitle || record.examName || 'Mid Term'), examYear: String(record.examYear || record.session || ''), skill: '__subject_marks__' }));
             saved = mergePerformanceRecords(markRows, saved);
         } catch (error) {
             renderSubjects();
-            if (!saved.length) workspace.innerHTML = `<div class="empty-state">${esc(error.message || 'Exam marks could not be loaded.')}</div>`;
+            if (!saved.length && !classSubjectTotals.length) workspace.innerHTML = `<div class="empty-state">${esc(error.message || 'Exam marks could not be loaded.')}</div>`;
             return;
         }
         renderSubjects();
@@ -344,31 +409,203 @@
             renderParticipationEditor();
             return;
         }
+
         const subjects = subjectsForClass();
-        subjectStepSelect.disabled = !subjects.length;
-        subjectStepSelect.innerHTML = '<option value="">Select Subject</option>' + subjects.map(subject => `<option value="${esc(subject)}">${esc(subject)}</option>`).join('');
-        subjectStepSelect.value = '';
+        const totalsReady = subjects.length > 0 && subjects.every(subject => hasSharedTotal(subject));
+        const editingTotals = totalMarksEditing || !totalsReady;
         subjectStepSelect.disabled = true;
+        subjectStepSelect.innerHTML = '<option value="">Select Subject</option>';
+        subjectStepSelect.value = '';
         subjectStepSelect.onchange = () => {};
-        const storedYears = saved.map(record => Number(record.examYear || String(record.performanceDate || '').slice(0, 4))).filter(year => Number.isFinite(year) && year > 0);
-        const years = [...new Set([...Array.from({length: 11}, (_, index) => new Date().getFullYear() - index), ...storedYears])].sort((a,b) => b-a);
-        workspace.innerHTML = `<div class="performance-heading"><div><h2>${esc(selectedStudent.fullName)}</h2><span class="choice-meta">${esc(selectedClass)} - Roll No: ${esc(selectedStudent.rollNo || selectedStudent.studentCode || '-')}</span></div></div><div class="exam-type-card"><label class="field-label" for="marksExamYear">Report Year<select class="date-input" id="marksExamYear">${years.map(year => `<option value="${year}">${year}</option>`).join('')}</select></label><label class="field-label" for="marksExamType">Exams Type<select class="date-input" id="marksExamType"><option>First Term</option><option>Mid Term</option><option>Third Term</option><option>Final</option></select></label><span class="choice-meta">Percentage and grade are calculated from marks. Grade can be edited.</span></div><div class="marks-table-wrap"><table class="marks-table"><thead><tr><th>Subject</th><th>Obtain Marks</th><th>Total Marks</th><th>Grade</th><th>Percentage</th><th>Actions</th></tr></thead><tbody>${subjects.map(subject => { const r=subjectMarksRecord(subject); const obt=r.obtainedMarks ?? ''; const total=r.totalMarks ?? ''; const pct=Number(total)>0 ? Math.round(Number(obt)/Number(total)*100) : ''; return `<tr data-subject-row="${esc(subject)}"><td class="subject-name">${esc(subject)}</td><td><input type="number" min="0" step="1" class="obtain-marks" aria-label="${esc(subject)} obtain marks" value="${esc(obt === '' ? '' : Math.round(Number(obt)))}"></td><td><input type="number" min="1" step="1" class="total-marks" aria-label="${esc(subject)} total marks" value="${esc(total === '' ? '' : Math.round(Number(total)))}"></td><td><input type="text" maxlength="12" class="subject-grade" aria-label="${esc(subject)} grade" value="${esc(r.grade || '')}"></td><td class="marks-percentage">${pct === '' ? '-' : `${pct}%`}</td><td><button type="button" class="action-button secondary marks-row-save">Save</button><button type="button" class="action-button marks-delete-button marks-row-delete" aria-label="Delete ${esc(subject)} marks">Delete</button></td></tr>`; }).join('')}<tr class="all-subjects-total"><th>All Subjects</th><th id="allSubjectsObtained">-</th><th id="allSubjectsTotal">-</th><th id="allSubjectsGrade">-</th><th id="allSubjectsPercentage">-</th><th></th></tr></tbody></table></div>`;
-        const typeSelect = document.getElementById('marksExamType'); typeSelect.value = selectedExamType; typeSelect.onchange = () => { selectedExamType = typeSelect.value; renderSubjects(); };
-        const yearSelect = document.getElementById('marksExamYear'); yearSelect.value = selectedExamYear; yearSelect.onchange = () => { selectedExamYear = yearSelect.value; renderSubjects(); };
-        workspace.querySelectorAll('[data-subject-row]').forEach(row => { const obt=row.querySelector('.obtain-marks'), total=row.querySelector('.total-marks'), grade=row.querySelector('.subject-grade'), output=row.querySelector('.marks-percentage'); const update=()=>{const t=Number(total.value), o=Number(obt.value), pct=t>0&&obt.value!==''?(o/t*100):NaN; output.textContent=Number.isFinite(pct)?`${Math.round(pct)}%`:'-'; if(Number.isFinite(pct)) grade.value=gradeForPercentage(pct); updateAllSubjectsTotals();}; obt.oninput=total.oninput=update; row.querySelector('.marks-row-save').onclick=()=>saveSubjectMarks(row); row.querySelector('.marks-row-delete').onclick=()=>deleteSubjectMarks(row); });
+
+        const storedYears = [...saved, ...classSubjectTotals]
+            .map(record => Number(record.examYear || String(record.performanceDate || '').slice(0, 4)))
+            .filter(year => Number.isFinite(year) && year > 0);
+        const years = [...new Set([...Array.from({ length: 11 }, (_, index) => new Date().getFullYear() - index), ...storedYears])].sort((a, b) => b - a);
+        const totalStatus = totalsReady
+            ? `Shared total marks are saved for ${esc(selectedClass)}, ${esc(selectedExamType)} ${esc(selectedExamYear)}. Enter obtained marks only, then save the report.`
+            : `Enter a total for each subject and click Save Total Marks. A subject's obtained-marks box unlocks as soon as its total is entered.`;
+
+        workspace.innerHTML = `<div class="performance-heading"><div><h2>${esc(selectedStudent.fullName)}</h2><span class="choice-meta">${esc(selectedClass)} - Roll No: ${esc(selectedStudent.rollNo || selectedStudent.studentCode || '-')}</span></div></div><div class="exam-type-card"><label class="field-label" for="marksExamYear">Report Year<select class="date-input" id="marksExamYear">${years.map(year => `<option value="${year}">${year}</option>`).join('')}</select></label><label class="field-label" for="marksExamType">Exams Type<select class="date-input" id="marksExamType"><option>First Term</option><option>Mid Term</option><option>Third Term</option><option>Final</option></select></label><span class="choice-meta">${totalStatus}</span></div><div class="marks-table-wrap"><table class="marks-table"><thead><tr><th>Subject</th><th>Obtain Marks</th><th>Total Marks</th><th>Grade</th><th>Percentage</th></tr></thead><tbody>${subjects.map(subject => { const record = subjectMarksRecord(subject); const total = sharedTotalValue(subject); const obtained = obtainedMarksDrafts.get(obtainedMarksDraftId(subject)) ?? record.obtainedMarks ?? ''; const percentage = Number(total) > 0 && obtained !== '' ? Math.round(Number(obtained) / Number(total) * 100) : ''; const grade = percentage === '' ? '-' : gradeForPercentage(percentage); return `<tr data-subject-row="${esc(subject)}"><td class="subject-name">${esc(subject)}</td><td><input type="number" min="0" step="1" class="obtain-marks" aria-label="${esc(subject)} obtain marks" value="${esc(obtained === '' ? '' : Math.round(Number(obtained)))}" ${Number(total) > 0 ? '' : 'disabled title="Enter total marks first"'}></td><td><input type="number" min="1" step="1" class="total-marks" aria-label="${esc(subject)} total marks" value="${esc(total === '' ? '' : Math.round(Number(total)))}" ${editingTotals ? '' : 'readonly'}></td><td class="subject-grade grade-output">${grade}</td><td class="marks-percentage">${percentage === '' ? '-' : `${percentage}%`}</td></tr>`; }).join('')}<tr class="all-subjects-total"><th>All Subjects</th><th id="allSubjectsObtained">-</th><th id="allSubjectsTotal">-</th><th id="allSubjectsGrade">-</th><th id="allSubjectsPercentage">-</th></tr></tbody></table></div><div class="action-row"><button type="button" class="action-button secondary" id="saveTotalMarks">${editingTotals ? '<i data-lucide="save" width="18"></i> Save Total Marks' : '<i data-lucide="pencil" width="18"></i> Edit Total Marks'}</button><button type="button" class="action-button" id="saveStudentReport" ${totalsReady && !editingTotals ? '' : 'disabled'}><i data-lucide="file-check-2" width="18"></i> Save Student Report</button></div>`;
+
+        const typeSelect = document.getElementById('marksExamType');
+        typeSelect.value = selectedExamType;
+        typeSelect.onchange = () => { selectedExamType = typeSelect.value; totalMarksEditing = false; renderSubjects(); };
+        const yearSelect = document.getElementById('marksExamYear');
+        yearSelect.value = selectedExamYear;
+        yearSelect.onchange = () => { selectedExamYear = yearSelect.value; totalMarksEditing = false; renderSubjects(); };
+        document.getElementById('saveTotalMarks').onclick = () => {
+            if (totalsReady && !editingTotals) {
+                totalMarksEditing = true;
+                renderSubjects();
+                return;
+            }
+            saveClassSubjectTotals(subjects);
+        };
+        document.getElementById('saveStudentReport').onclick = () => saveStudentReport(subjects);
+        workspace.querySelectorAll('[data-subject-row]').forEach(row => {
+            const obtained = row.querySelector('.obtain-marks');
+            const total = row.querySelector('.total-marks');
+            const grade = row.querySelector('.subject-grade');
+            const percentage = row.querySelector('.marks-percentage');
+            const updateObtainedAvailability = () => {
+                const totalValue = Number(total.value);
+                obtained.disabled = !Number.isInteger(totalValue) || totalValue <= 0;
+                if (obtained.disabled) obtained.title = 'Enter total marks first';
+                else obtained.removeAttribute('title');
+            };
+            const update = () => {
+                const totalValue = Number(total.value);
+                const obtainedValue = Number(obtained.value);
+                const result = totalValue > 0 && obtained.value !== '' ? Math.round(obtainedValue / totalValue * 100) : NaN;
+                percentage.textContent = Number.isFinite(result) ? `${result}%` : '-';
+                grade.textContent = Number.isFinite(result) ? gradeForPercentage(result) : '-';
+                updateAllSubjectsTotals();
+            };
+            obtained.oninput = () => {
+                obtainedMarksDrafts.set(obtainedMarksDraftId(row.dataset.subjectRow), obtained.value);
+                update();
+            };
+            total.oninput = () => {
+                updateObtainedAvailability();
+                update();
+            };
+            updateObtainedAvailability();
+        });
         updateAllSubjectsTotals();
         if (window.lucide) lucide.createIcons();
     }
 
     function updateAllSubjectsTotals() {
-        const marksRows = [...workspace.querySelectorAll('[data-subject-row]')].map(row => ({ obtained: row.querySelector('.obtain-marks').value, total: row.querySelector('.total-marks').value })).filter(record => record.obtained !== '' && record.total !== '' && Number(record.total) > 0 && Number.isFinite(Number(record.obtained)) && Number.isFinite(Number(record.total)));
+        const marksRows = [...workspace.querySelectorAll('[data-subject-row]')]
+            .map(row => ({ obtained: row.querySelector('.obtain-marks').value, total: row.querySelector('.total-marks').value }))
+            .filter(record => record.obtained !== '' && record.total !== '' && Number(record.total) > 0 && Number.isFinite(Number(record.obtained)) && Number.isFinite(Number(record.total)));
         const obtained = marksRows.reduce((sum, record) => sum + Number(record.obtained), 0);
         const total = marksRows.reduce((sum, record) => sum + Number(record.total), 0);
         const percentage = total > 0 ? Math.round(obtained / total * 100) : null;
         document.getElementById('allSubjectsObtained').textContent = marksRows.length ? String(obtained) : '-';
         document.getElementById('allSubjectsTotal').textContent = marksRows.length ? String(total) : '-';
-        document.getElementById('allSubjectsPercentage').textContent = percentage == null ? '-' : percentage + '%';
+        document.getElementById('allSubjectsPercentage').textContent = percentage == null ? '-' : `${percentage}%`;
         document.getElementById('allSubjectsGrade').textContent = percentage == null ? '-' : gradeForPercentage(percentage);
+    }
+
+    async function saveClassSubjectTotals(subjects) {
+        const rows = [...workspace.querySelectorAll('[data-subject-row]')];
+        const date = today();
+        const records = [];
+        for (const row of rows) {
+            const subject = canonicalSubject(row.dataset.subjectRow);
+            const totalRaw = row.querySelector('.total-marks').value.trim();
+            const total = Number(totalRaw);
+            if (totalRaw === '' || !Number.isInteger(total) || total <= 0) {
+                showAppAlert(`Enter a valid whole-number total for ${subject}.`, 'Total Marks Required');
+                row.querySelector('.total-marks').focus();
+                return;
+            }
+            records.push({
+                id: classSubjectTotalRecord(subject).id || classSubjectTotalId(subject),
+                recordType: CLASS_SUBJECT_TOTAL_RECORD_TYPE,
+                studentId: '__class_total__',
+                studentName: '',
+                classGrade: selectedClass,
+                section: '',
+                subject,
+                examType: selectedExamType,
+                examYear: selectedExamYear,
+                examName: selectedExamType,
+                session: selectedExamYear,
+                obtainedMarks: null,
+                totalMarks: total,
+                grade: '',
+                percentage: 0,
+                skill: '',
+                learningOutcome: '',
+                rating: '',
+                performanceDate: date,
+                performanceMonth: date.slice(0, 7),
+                remarks: ''
+            });
+        }
+        try {
+            const responses = await Promise.all(records.map(async record => {
+                const response = await fetch(`${apiBase}/student-results`, { method: 'POST', headers: headers(), body: JSON.stringify(record) });
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok || result.success === false) throw new Error(result.message || 'Total marks could not be saved.');
+                return result.result || record;
+            }));
+            classSubjectTotals = mergeClassSubjectTotals(responses, classSubjectTotals);
+            storeLocalClassSubjectTotals(classSubjectTotals);
+            totalMarksEditing = false;
+            renderSubjects();
+            showSuccessModal('Total Marks Saved', `Total marks are now shared for all ${selectedClass} students in ${selectedExamType} ${selectedExamYear}.`);
+        } catch (error) {
+            showAppAlert(error.message || 'Total marks could not be saved.', 'Save Failed');
+        }
+    }
+
+    async function saveStudentReport(subjects) {
+        if (totalMarksEditing || !subjects.every(subject => hasSharedTotal(subject))) {
+            showAppAlert('Save total marks for every subject before saving the student report.', 'Total Marks Required');
+            return;
+        }
+        const records = [];
+        const date = today();
+        for (const row of workspace.querySelectorAll('[data-subject-row]')) {
+            const subject = canonicalSubject(row.dataset.subjectRow);
+            const obtainedRaw = row.querySelector('.obtain-marks').value.trim();
+            const total = Number(classSubjectTotalRecord(subject).totalMarks);
+            const obtained = Number(obtainedRaw);
+            if (teacherEmbedded && (!teacherStudentIsAssigned(selectedStudent) || !teacherAssignmentMatches(selectedClass, selectedStudentSection, subject))) {
+                showAppAlert('You can only upload results for your assigned class, section, and subject.', 'Access Restricted');
+                return;
+            }
+            if (obtainedRaw === '' || !Number.isInteger(obtained) || obtained < 0 || obtained > total) {
+                showAppAlert(`Enter obtained marks from 0 to ${total} for ${subject}.`, 'Obtained Marks Required');
+                row.querySelector('.obtain-marks').focus();
+                return;
+            }
+            const percentage = Math.round(obtained / total * 100);
+            records.push({
+                id: subjectMarksRecord(subject).id || subjectMarksId(subject),
+                studentId: String(selectedStudent.id),
+                studentName: selectedStudent.fullName || '',
+                classGrade: selectedClass,
+                section: selectedStudentSection,
+                subject,
+                examType: selectedExamType,
+                examYear: selectedExamYear,
+                examName: selectedExamType,
+                session: selectedExamYear,
+                obtainedMarks: obtained,
+                totalMarks: total,
+                grade: gradeForPercentage(percentage),
+                percentage,
+                skill: '__subject_marks__',
+                learningOutcome: '',
+                rating: '',
+                excellentDescription: '',
+                satisfactoryDescription: '',
+                needsPracticeDescription: '',
+                performanceDate: date,
+                performanceMonth: date.slice(0, 7),
+                remarks: ''
+            });
+        }
+        try {
+            const responses = await Promise.all(records.map(async record => {
+                const response = await fetch(`${apiBase}/student-results`, { method: 'POST', headers: headers(), body: JSON.stringify(record) });
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok || result.success === false) throw new Error(result.message || 'Student report could not be saved.');
+                return result.result || record;
+            }));
+            responses.forEach(saveLocalPerformanceRecord);
+            saved = mergePerformanceRecords(responses.map(record => ({ ...record, skill: '__subject_marks__' })), saved);
+            subjects.forEach(subject => obtainedMarksDrafts.delete(obtainedMarksDraftId(subject)));
+            renderSubjects();
+            showSuccessModal('Report Saved', `${selectedStudent.fullName}'s ${selectedExamType} ${selectedExamYear} report has been saved.`);
+        } catch (error) {
+            showAppAlert(error.message || 'Student report could not be saved.', 'Save Failed');
+        }
     }
 
     function renderLegacySkillEditor(subject) {
@@ -450,37 +687,6 @@
     function renderSkillEditor(subject) { renderSectionEditor(subject, ''); }
 
     function renderSectionEditor(subject, section = selectedSection) { selectedSubject=subject; selectedSection=section||''; setSteps(4); workspace.innerHTML='<div class="empty-state">Subject skill reports are not shown here.</div>'; }
-
-    async function saveSubjectMarks(row) {
-        const subject=row.dataset.subjectRow, obtainedRaw=row.querySelector('.obtain-marks').value.trim(), totalRaw=row.querySelector('.total-marks').value.trim(), grade=row.querySelector('.subject-grade').value.trim(); const obtained=Number(obtainedRaw), total=Number(totalRaw);
-        if (teacherEmbedded && (!teacherStudentIsAssigned(selectedStudent) || !teacherAssignmentMatches(selectedClass, selectedStudentSection, subject))) { showAppAlert('You can only upload results for your assigned class, section, and subject.', 'Access Restricted'); return; }
-        if(obtainedRaw===''||totalRaw===''||!Number.isFinite(obtained)||!Number.isFinite(total)||!Number.isInteger(obtained)||!Number.isInteger(total)||obtained<0||total<=0||obtained>total){showAppAlert('Enter whole-number marks for obtain and total. Obtain marks cannot exceed total marks.','Marks Required');return;}
-        const date=today(), percentage=Math.round(obtained/total*100), finalGrade=grade||gradeForPercentage(percentage), record={id:subjectMarksId(subject),studentId:String(selectedStudent.id),studentName:selectedStudent.fullName||'',classGrade:selectedClass,section:selectedStudentSection,subject,examType:selectedExamType,examYear:selectedExamYear,examName:selectedExamType,session:selectedExamYear,obtainedMarks:obtained,totalMarks:total,grade:finalGrade,percentage,skill:'__subject_marks__',learningOutcome:'',rating:'',excellentDescription:'',satisfactoryDescription:'',needsPracticeDescription:'',performanceDate:date,performanceMonth:date.slice(0,7),remarks:''}; saveLocalPerformanceRecord(record);
-        try{const response=await fetch(`${apiBase}/student-results`,{method:'POST',headers:headers(),body:JSON.stringify(record)});const result=await response.json();if(!response.ok||!result.success)throw new Error(result.message||'Marks could not be saved.');saved=mergePerformanceRecords([record],saved);updateAllSubjectsTotals();const button=row.querySelector('.marks-row-save');button.textContent='Saved';button.disabled=true;setTimeout(()=>{button.textContent='Save';button.disabled=false;},1200);}catch(error){saved=mergePerformanceRecords([record],saved);showAppAlert(error.message||'Marks could not be saved.','Save Failed');}
-    }
-
-    async function deleteSubjectMarks(row) {
-        const subject = row.dataset.subjectRow;
-        if (teacherEmbedded && (!teacherStudentIsAssigned(selectedStudent) || !teacherAssignmentMatches(selectedClass, selectedStudentSection, subject))) { showAppAlert('You can only manage marks for your assigned class, section, and subject.', 'Access Restricted'); return; }
-        const record = subjectMarksRecord(subject);
-        if (!(await showAppConfirm(`Delete ${subject} marks for ${selectedExamType} ${selectedExamYear}?`))) return;
-        try {
-            if (record.id) {
-                const response = await fetch(`${apiBase}/student-results/${encodeURIComponent(record.id)}`, { method: 'DELETE', headers: headers() });
-                const result = await response.json().catch(() => ({}));
-                if (!response.ok || result.success === false) throw new Error(result.message || 'Marks could not be deleted.');
-            }
-            saved = saved.filter(item => String(item.id || '') !== String(record.id || ''));
-            if (record.id) deleteLocalPerformanceRecord(record.id);
-            row.querySelector('.obtain-marks').value = '';
-            row.querySelector('.total-marks').value = '';
-            row.querySelector('.subject-grade').value = '';
-            row.querySelector('.marks-percentage').textContent = '-';
-            updateAllSubjectsTotals();
-        } catch (error) {
-            showAppAlert(error.message || 'Marks could not be deleted.', 'Delete Failed');
-        }
-    }
 
     function renderCoCurriculumEditor() {
         setSteps(4);

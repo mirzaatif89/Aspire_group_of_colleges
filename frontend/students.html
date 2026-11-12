@@ -14,11 +14,16 @@
         body.students-status-view #studentsTable th:nth-child(7), body.students-status-view #studentsTable td:nth-child(7),
         body.students-status-view #studentsTable th:nth-child(8), body.students-status-view #studentsTable td:nth-child(8),
         body.students-status-view #studentsTable th:nth-child(9), body.students-status-view #studentsTable td:nth-child(9) { display: none; }
-        body.students-status-view .student-toolbar-left{display:grid;grid-template-columns:minmax(115px,auto) repeat(4,minmax(145px,1fr));align-items:end;gap:12px;width:100%}
+        body.students-status-view .student-toolbar-left{display:grid;grid-template-columns:minmax(115px,max-content) minmax(160px,1.35fr) minmax(160px,1.35fr) minmax(130px,1fr) minmax(145px,1fr) minmax(165px,max-content);align-items:end;gap:12px;width:100%}
         body.students-status-view .student-stat{min-width:0;white-space:nowrap}
         body.students-status-view .student-filter-group{width:auto;min-width:0;max-width:none;flex:initial}
+        body.students-status-view .student-multifilter{min-width:0}
+        body.students-status-view .student-multifilter-trigger{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        body.students-status-view .student-multifilter-menu{right:auto;width:min(280px,calc(100vw - 32px));max-width:calc(100vw - 32px);max-height:min(320px,calc(100vh - 150px))}
+        body.students-status-view .student-multifilter-item{min-width:0;overflow-wrap:anywhere}
         body.students-status-view .student-toolbar>.student-add-btn{display:none!important}
-        @media(max-width:900px){body.students-status-view .student-toolbar-left{grid-template-columns:repeat(2,minmax(0,1fr))}body.students-status-view .student-stat{grid-column:1/-1}}
+        @media(max-width:1180px){body.students-status-view .student-toolbar-left{grid-template-columns:repeat(3,minmax(0,1fr))}body.students-status-view .student-stat{grid-column:1/-1}}
+        @media(max-width:720px){body.students-status-view .student-toolbar-left{grid-template-columns:minmax(0,1fr)}body.students-status-view .student-stat{grid-column:auto}body.students-status-view .student-print-btn{width:100%;justify-content:center}}
         .performance-report-fullscreen{align-items:stretch!important;justify-content:stretch!important;padding:0!important}.performance-report-fullscreen>div{width:100%!important;max-width:none!important;max-height:none!important;height:100vh!important;border-radius:0!important;box-sizing:border-box;padding:28px 5vw!important}.performance-report-fullscreen #performanceReportSubjects{display:none!important}
         /* Specific Basic Styles for the Form Modal/Section */
         .form-container {
@@ -1552,14 +1557,19 @@
     </div>
 
     <script src="auth.js?v=20260902-single-active-performance"></script>
-    <script src="script.js?v=20260926-exam-types"></script>
+    <script src="script.js?v=20261109-class-report-card"></script>
     <script>
         if (window.location.hash === '#status') {
             document.body.classList.add('students-status-view');
             document.title = 'Exams Reports - Aspire Group of Colleges';
             const heading = document.getElementById('studentsPageHeading');
             if (heading) heading.textContent = 'Exams Reports';
-            document.querySelector('.student-print-btn')?.remove();
+            const printButton = document.querySelector('.student-print-btn');
+            if (printButton) {
+                printButton.setAttribute('aria-label', 'Print exam report list');
+                printButton.innerHTML = '<i data-lucide="printer"></i> Print Report';
+                if (window.lucide) window.lucide.createIcons();
+            }
             document.querySelectorAll('.exam-report-filter').forEach(control => { control.style.display = ''; });
             const yearPicker = document.getElementById('examReportYear');
             if (yearPicker) {

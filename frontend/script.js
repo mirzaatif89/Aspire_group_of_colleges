@@ -6899,6 +6899,8 @@ async function openStudentPerformanceReportFromEncoded(encodedPayload, reportMod
     const selectedType=normalizeSchoolExamType(document.getElementById('examReportType')?.value||'Mid Term');
     const apiBase=typeof getApiBaseUrl==='function'?getApiBaseUrl():'/api';
     const normalizeReportName=value=>String(value||'').trim().toLowerCase().replace(/\s+/g,' ');
+    const normalizeReportSubject=value=>normalizeReportName(value)==='math'?'mathematics':normalizeReportName(value);
+    const reportSubjectLabel=value=>normalizeReportSubject(value)==='mathematics'?'Mathematics':String(value||'').trim();
     let examResults=Array.isArray(studentExamReportRecords)?studentExamReportRecords.filter(record=>String(record.studentId||'')===String(student.id||'')||(normalizeReportName(record.studentName)&&normalizeReportName(record.studentName)===normalizeReportName(student.fullName))):[];
     if(!examResults.length){try{const response=await fetch(apiBase+'/student-results?studentId='+encodeURIComponent(student.id||''));const data=await response.json();if(response.ok&&data.success)examResults=Array.isArray(data.results)?data.results:[];}catch(_){}}
     let localMarks=[];try{localMarks=JSON.parse(localStorage.getItem('eduCore_student_skill_performance')||'[]').filter(record=>String(record.studentId)===String(student.id)||normalizeReportName(record.studentName)===normalizeReportName(student.fullName));}catch(_){}
@@ -6909,8 +6911,9 @@ async function openStudentPerformanceReportFromEncoded(encodedPayload, reportMod
         const year=String(result.examYear||result.session||String(result.performanceDate||'').slice(0,4));
         const type=normalizeSchoolExamType(result.examType||result.termTitle||result.examName||'Mid Term');
         if((selectedYear&&year!==selectedYear)||normalizeSchoolExamType(type)!==selectedType)return;
-        const key=[result.studentId||student.id,normalizeReportName(result.subject),type.toLowerCase(),year].join('|');
-        if(!examRowsByKey.has(key))examRowsByKey.set(key,{...result,examYear:year,examType:type});
+        const key=[result.studentId||student.id,normalizeReportSubject(result.subject),type.toLowerCase(),year].join('|');
+        const current=examRowsByKey.get(key);
+        if(!current||String(result.updatedAt||result.createdAt||result.id||'')>String(current.updatedAt||current.createdAt||current.id||''))examRowsByKey.set(key,{...result,subject:reportSubjectLabel(result.subject),examYear:year,examType:type});
     });
     const examRows=[...examRowsByKey.values()].sort((a,b)=>String(a.subject).localeCompare(String(b.subject),undefined,{sensitivity:'base'}));
     const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -7556,6 +7559,7 @@ function renderStudents(term) {
                 : (['paid', 'zero fee student'].includes(normalizedFeeStatus) ? 'status-paid' : (normalizedFeeStatus === 'late' ? 'status-failed' : 'status-pending'));
             const encodedStudent = encodeURIComponent(JSON.stringify(s));
             const tr = document.createElement('tr');
+            tr.dataset.studentId = String(s.id || '');
             tr.innerHTML = `
                 <td><b>${s.studentCode || '-'}</b></td>
                 <td><div class="student-name-cell">
@@ -7963,9 +7967,154 @@ function deleteAlumniRecord(recordId) {
     renderAlumniRecords();
 }
 
+function printExamsReportsList() {
+    const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[char]));
+    const getCellText = (cell) => String(cell?.textContent || '').replace(/\s+/g, ' ').trim() || '-';
+    const normalizeText = (value) => String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    const displayedStudents = Array.from(document.querySelectorAll('#studentsTable tbody tr'))
+        .map((row) => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length < 6) return null;
+            return {
+                recordId: String(row.dataset.studentId || ''),
+                studentId: getCellText(cells[0]),
+                name: getCellText(cells[1]?.querySelector('.student-name-text') || cells[1]),
+                fatherName: getCellText(cells[2]),
+                className: getCellText(cells[4]),
+                section: getCellText(cells[5])
+            };
+        })
+        .filter(Boolean);
+
+    const branding = typeof getBrandingSettings === 'function' ? getBrandingSettings() : {};
+    const settings = typeof getData === 'function' ? (getData(STORAGE_KEY_SETTINGS) || {}) : {};
+    const schoolName = String(
+        branding.schoolName || branding.schoolTitle || settings.schoolName || window.SCHOOL_BRANDING?.name || 'Aspire College Jand'
+    ).trim() || 'Aspire College Jand';
+    const reportYear = document.getElementById('examReportYear')?.value || 'All Years';
+    const examType = normalizeSchoolExamType(document.getElementById('examReportType')?.value || 'Mid Term');
+    const classFilter = String(document.getElementById('studentQuickFilterTrigger')?.textContent || 'All Students').trim();
+    const searchTerm = String(document.getElementById('studentSearchInput')?.value || '').trim();
+    const printedAt = new Date().toLocaleString('en-PK', { dateStyle: 'medium', timeStyle: 'short' });
+    const logoSrc = new URL(branding.logoDataUrl || 'images/logo.png', window.location.href).href;
+    const matchingRecords = (Array.isArray(studentExamReportRecords) ? studentExamReportRecords : [])
+        .filter((record) => {
+            if (!record?.subject || record.obtainedMarks == null || record.obtainedMarks === '') return false;
+            const recordYear = String(record.examYear || record.session || String(record.performanceDate || '').slice(0, 4));
+            const recordType = normalizeSchoolExamType(record.examType || record.examName || 'Mid Term');
+            return (!reportYear || recordYear === String(reportYear)) && recordType === examType;
+        });
+    const recordMatchesStudent = (record, student) => (
+        (student.recordId && String(record.studentId || '') === student.recordId) ||
+        (normalizeText(record.studentName) && normalizeText(record.studentName) === normalizeText(student.name))
+    );
+    const reportSubjectKey = (value) => normalizeText(value) === 'math' ? 'mathematics' : normalizeText(value);
+    const reportSubjectName = (value) => reportSubjectKey(value) === 'mathematics' ? 'Mathematics' : String(value || '').trim();
+    const subjectNames = [...new Set(matchingRecords
+        .filter((record) => displayedStudents.some((student) => recordMatchesStudent(record, student)))
+        .map((record) => reportSubjectName(record.subject))
+        .filter(Boolean))]
+        .sort((left, right) => left.localeCompare(right, undefined, { numeric: true, sensitivity: 'base' }));
+    const reportRows = displayedStudents.map((student) => {
+        const marksBySubject = new Map();
+        matchingRecords.filter((record) => recordMatchesStudent(record, student)).forEach((record) => {
+            const subject = reportSubjectName(record.subject);
+            if (!subject) return;
+            const current = marksBySubject.get(subject);
+            if (!current || String(record.updatedAt || record.createdAt || record.id || '') > String(current.updatedAt || current.createdAt || current.id || '')) {
+                marksBySubject.set(subject, record);
+            }
+        });
+        const subjectMarks = subjectNames.map((subject) => marksBySubject.get(subject) || null);
+        const obtained = subjectMarks.reduce((sum, record) => sum + (Number.isFinite(Number(record?.obtainedMarks)) ? Number(record.obtainedMarks) : 0), 0);
+        const total = subjectMarks.reduce((sum, record) => sum + (Number.isFinite(Number(record?.totalMarks)) ? Number(record.totalMarks) : 0), 0);
+        const percentage = total > 0 ? Math.round((obtained / total) * 100) : null;
+        return { ...student, subjectMarks, obtained, total, percentage };
+    });
+    const filters = [
+        `Year: ${reportYear}`,
+        `Exam: ${examType}`,
+        classFilter && classFilter !== 'All Students' ? `Class: ${classFilter}` : '',
+        searchTerm ? `Search: ${searchTerm}` : ''
+    ].filter(Boolean).join(' | ');
+    const rowsMarkup = reportRows.length && subjectNames.length
+        ? reportRows.map((student, index) => `
+            <tr>
+                <td class="number">${index + 1}</td>
+                <td>${escapeHtml(student.studentId)}</td>
+                <td>${escapeHtml(student.name)}</td>
+                <td>${escapeHtml(student.fatherName)}</td>
+                <td>${escapeHtml(student.className)}</td>
+                <td>${escapeHtml(student.section)}</td>
+                ${student.subjectMarks.map((record) => `<td class="mark">${record ? escapeHtml(record.obtainedMarks) : '-'}</td>`).join('')}
+                <td class="total-mark">${student.total || '-'}</td>
+                <td class="obtained-mark">${student.obtained || '-'}</td>
+                <td class="percentage">${student.percentage == null ? '-' : `${student.percentage}%`}</td>
+            </tr>`).join('')
+        : `<tr><td class="empty" colspan="${9 + subjectNames.length}">No students have marks for the selected year and exam type.</td></tr>`;
+    const html = `<!doctype html>
+        <html lang="en"><head><meta charset="utf-8"><title>${escapeHtml(schoolName)} - Exams Report</title>
+        <style>
+            @page { size: A4 landscape; margin: 8mm; }
+            * { box-sizing: border-box; }
+            body { margin: 0; color: #17304a; font-family: Arial, sans-serif; font-size: 10px; }
+            .report-card { border: 1.5px solid #0f766e; border-radius: 8px; overflow: hidden; }
+            .heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 12px 15px; color: #fff; background: linear-gradient(120deg, #064e4a, #16837a); }
+            .school-identity { display: flex; align-items: center; gap: 10px; }
+            .logo { width: 43px; height: 43px; padding: 2px; object-fit: contain; border-radius: 7px; background: #fff; }
+            h1 { margin: 0 0 3px; font-size: 18px; letter-spacing: .01em; }
+            .subtitle, .meta { margin: 0; font-size: 10px; }
+            .subtitle { opacity: .88; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; }
+            .meta { text-align: right; line-height: 1.65; }
+            .filters { margin: 0; padding: 7px 12px; color: #234b5a; background: #e9f7f4; border-bottom: 1px solid #a9d8d0; font-size: 9px; font-weight: 700; }
+            .table-wrap { padding: 10px; overflow: hidden; }
+            table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 8px; }
+            th, td { padding: 6px 4px; border: 1px solid #aac7c2; text-align: left; vertical-align: middle; overflow-wrap: anywhere; }
+            th { color: #143f3a; background: #d9eeea; font-size: 7px; text-transform: uppercase; letter-spacing: .025em; }
+            th.subject { text-align: center; background: #e7f4e7; }
+            td.number { width: 20px; text-align: center; }
+            td.mark, td.total-mark, td.obtained-mark, td.percentage { text-align: center; font-weight: 700; }
+            td.mark { color: #1f4d3c; }
+            td.total-mark { background: #f2f7f6; }
+            td.obtained-mark { color: #075f4d; background: #e8f5ee; }
+            td.percentage { color: #7a5514; background: #fff7dd; }
+            td.empty { padding: 24px 8px; color: #526476; text-align: center; }
+            tbody tr:nth-child(even) { background: #f8fbfa; }
+            .legend { margin: 0 10px 10px; color: #4a6271; font-size: 8px; text-align: right; }
+            .footer { display: flex; justify-content: space-between; gap: 12px; padding: 7px 12px; color: #45616a; background: #f0f8f6; border-top: 1px solid #c2dfd9; font-size: 8px; }
+            thead { display: table-header-group; } tr { break-inside: avoid; }
+        </style></head><body>
+            <main class="report-card"><header class="heading"><div class="school-identity"><img class="logo" src="${escapeHtml(logoSrc)}" alt="School logo"><div><h1>${escapeHtml(schoolName)}</h1><p class="subtitle">Class Examination Report Card</p></div></div><div class="meta">${escapeHtml(printedAt)}<br>Total Students: ${reportRows.length}</div></header>
+            <p class="filters">${escapeHtml(filters)}</p>
+            <div class="table-wrap"><table><thead><tr><th>#</th><th>Student ID</th><th>Student Name</th><th>Father Name</th><th>Class</th><th>Section</th>${subjectNames.map((subject) => `<th class="subject">${escapeHtml(subject)}<br><small>Obt.</small></th>`).join('')}<th>Total<br>Marks</th><th>Obtained<br>Marks</th><th>Percentage</th></tr></thead><tbody>${rowsMarkup}</tbody></table></div>
+            <p class="legend">Subject columns show obtained marks. Total Marks and Obtained Marks are calculated from all listed subjects.</p>
+            <footer class="footer"><span>Generated from the current exams report filters.</span><span>Principal Signature: ____________________</span></footer></main>
+            <script>window.focus(); window.print(); window.onafterprint = () => window.close();<\/script>
+        </body></html>`;
+    const printWindow = window.open('', 'eduCoreExamsReportPrint', 'width=1000,height=700');
+    if (!printWindow) {
+        alert('Popup blocked. Please allow popups to print the exams report.');
+        return;
+    }
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+}
+
 function printStudentsList() {
     if (!isCurrentPage('students.html')) {
         window.print();
+        return;
+    }
+
+    if (window.location.hash === '#status') {
+        printExamsReportsList();
         return;
     }
 
@@ -8346,7 +8495,10 @@ function populateStudentQuickFilterOptions() {
             if (!classMap.has(key)) classMap.set(key, normalized);
         });
 
-    const classes = Array.from(classMap.values()).sort(compareStudentClassNames);
+    const performanceClassFilter = window.location.hash === '#status';
+    const classes = Array.from(classMap.values())
+        .filter((className) => !performanceClassFilter || getStudentQuickFilterClassLabel(className) !== 'Graduate')
+        .sort(compareStudentClassNames);
     if (window.location.hash === '#status') {
         ['A', 'B', 'C'].forEach(section => sectionMap.set(section.toLowerCase(), section));
     } else {
@@ -8356,9 +8508,8 @@ function populateStudentQuickFilterOptions() {
         });
     }
     const sections = Array.from(sectionMap.values()).sort((left, right) => left.localeCompare(right, undefined, { numeric: true, sensitivity: 'base' }));
-    const performanceClassFilter = window.location.hash === '#status';
     const signature = [
-        performanceClassFilter ? 'filters:v7-performance-class-section-list' : 'filters:v5-simple-student-lists',
+        performanceClassFilter ? 'filters:v8-performance-class-section-list-without-graduate' : 'filters:v5-simple-student-lists',
         `classes:${classes.map((name) => String(name || '').toLowerCase()).join('|')}`,
         `sections:${sections.map((name) => String(name || '').toLowerCase()).join('|')}`
     ].join('||');

@@ -4,14 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Aspire Group of Colleges</title>
+    <title>Login - Aspire College Jand</title>
     <link rel="icon" type="image/png" href="images/logo.png">
     <link rel="stylesheet" href="style.css?v=20260814-centered-school-name">
     <!-- Real-Time SQL Sync -->
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="school-theme.css?v=20261002-dashboard-cards-125">
+    <link rel="stylesheet" href="school-theme.css?v=20261108-login-campus-center">
     <script src="school-branding.js?v=20260924"></script>
 </head>
 
@@ -24,8 +24,8 @@
             <div class="login-header">
                 <div class="login-icon-circle">
                     <img class="login-school-logo" src="images/logo.png"
-                        alt="Aspire Group of Colleges logo">
-                    <span class="login-school-name"><strong>Aspire Group</strong><br>of Colleges</span>
+                        alt="Aspire College Jand logo">
+                    <span class="login-school-name"><strong>Aspire College</strong><span class="login-campus-name">Jand</span></span>
                 </div>
             </div>
 
@@ -55,38 +55,10 @@
                     </div>
 
                     <button type="submit" class="btn btn-success" style="width: 100%;">Sign In</button>
-                    <button type="button" class="login-link-btn" id="forgotAdminPasswordBtn">Forgot admin password?</button>
                 </form>
                 <a class="school-home-link" href="website.html">← Back to school website</a>
             </div>
 
-        </div>
-    </div>
-
-    <div class="auth-modal-overlay" id="forgotAdminModal">
-        <div class="auth-modal">
-            <button type="button" class="auth-modal-close" id="closeForgotAdminModal" aria-label="Close">
-                <i data-lucide="x"></i>
-            </button>
-            <h2>Reset Admin Password</h2>
-            <p>OTP will be sent to the admin recovery email.</p>
-            <div class="input-group">
-                <label for="forgotAdminUsername">Admin Username</label>
-                <input type="text" id="forgotAdminUsername" placeholder="admin">
-            </div>
-            <div class="input-group">
-                <label for="forgotAdminNewPassword">New Password</label>
-                <input type="password" id="forgotAdminNewPassword" placeholder="Enter new password">
-            </div>
-            <div class="input-group">
-                <label for="forgotAdminOtp">OTP</label>
-                <input type="text" id="forgotAdminOtp" inputmode="numeric" maxlength="6" placeholder="6 digit OTP">
-            </div>
-            <div class="auth-modal-actions">
-                <button type="button" class="btn btn-outline" id="sendForgotAdminOtpBtn">Send OTP</button>
-                <button type="button" class="btn btn-success" id="resetForgotAdminPasswordBtn">Reset Password</button>
-            </div>
-            <p class="auth-modal-status" id="forgotAdminStatus"></p>
         </div>
     </div>
 

@@ -69,7 +69,8 @@ function resolvePageFileByRoute(routeName = '') {
     if (!normalized) return '';
     if (RESERVED_ROUTE_NAMES.has(normalized)) return '';
     if (normalized === 'login') return 'login.html';
-    if (normalized === 'index' || normalized === 'website') return 'website.html';
+    if (normalized === 'index') return 'login.html';
+    if (normalized === 'website') return 'website.html';
     if (!/^[a-z0-9_-]+$/i.test(normalized)) return '';
 
     const candidate = `${normalized}.html`;
@@ -78,7 +79,7 @@ function resolvePageFileByRoute(routeName = '') {
 }
 
 app.get('/', (_req, res) => {
-    res.sendFile(path.join(FRONTEND_DIR, 'website.html'));
+    res.sendFile(path.join(FRONTEND_DIR, 'login.html'));
 });
 
 app.get('/:pageName([a-zA-Z0-9_-]+).html', (req, res, next) => {

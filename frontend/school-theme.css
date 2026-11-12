@@ -223,6 +223,7 @@ body, input, select, textarea, button { font-family: 'Segoe UI', Arial, sans-ser
 .login-school-logo { width: 48px; height: 48px; padding: 2px; border: 0; border-radius: 8px; background: #fff; object-fit: contain; box-shadow: none; }
 .login-school-name { width: auto; max-width: 100%; color: #fff; font-size: 14px; font-weight: 700; line-height: 1.35; text-align: left; text-shadow: none; white-space: normal; }
 .login-school-name strong { font-size: 18px; font-weight: 700; }
+.login-school-name .login-campus-name { display: block; text-align: center; font-size: 18px; font-weight: 700; }
 .login-body { padding: 31px 32px 25px; }
 .login-body .input-group label { margin-bottom: 7px; color: #32475c; font-size: 13px; }
 .login-body .input-group input { min-height: 50px; padding: 12px 15px; border: 1px solid #cdd9e9; border-radius: 6px; background: #eaf0fc; color: #172033; font-size: 13px; }
