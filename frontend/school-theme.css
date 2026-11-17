@@ -155,6 +155,25 @@ body, input, select, textarea, button { font-family: 'Segoe UI', Arial, sans-ser
 .dashboard-container .sidebar .user-info h4 { margin: 0 0 2px; color: #f1f5ef; font-size: 13px; font-weight: 650; }
 .dashboard-container .sidebar .user-info p { margin: 0; color: #a9beb2; font-size: 11px; }
 
+/* Keep certificate access visible while the long sidebar menu scrolls. */
+.dashboard-container .sidebar .nav-links > a[href$="/certificate"],
+.dashboard-container .sidebar .nav-links > a[href$="certificate.html"] {
+  order: -1;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  flex-shrink: 0;
+  background: #17635e;
+  border: 1px solid #91cfc6;
+  box-shadow: 0 3px 8px rgb(0 0 0 / 12%);
+}
+@media (max-width: 900px) {
+  .dashboard-container .sidebar .nav-links > a[href$="/certificate"],
+  .dashboard-container .sidebar .nav-links > a[href$="certificate.html"] {
+    left: 0;
+  }
+}
+
 /* Main workspace */
 .dashboard-container .main-content {
   min-width: 0;
