@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon backend/server.js"
+    "dev": "node --watch app.js"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.2",

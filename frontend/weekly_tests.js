@@ -85,10 +85,26 @@
         dirty = false; action();
     }
     async function request(path, init) {
-        const response = await fetch(`${api}/${path}`, { cache:'no-store', ...init });
-        const data = await response.json();
-        if (!response.ok || data.success === false) throw new Error(data.message || 'Weekly test request failed.');
-        return data;
+        const attempts = !init || !init.method || init.method === 'GET' ? 4 : 1;
+        for (let attempt = 0; attempt < attempts; attempt++) {
+            try {
+                const response = await fetch(`${api}/${path}`, { cache:'no-store', ...init });
+                if ([408, 429, 502, 503, 504].includes(response.status) && attempt < attempts - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 400 * (attempt + 1)));
+                    continue;
+                }
+                const data = await response.json();
+                if (!response.ok || data.success === false) throw Object.assign(new Error(
+                    response.status === 404 && path === 'weekly-tests'
+                        ? 'The server is running an older version. Restart the application server and click Retry Loading.'
+                        : data.message || 'Weekly test request failed.'
+                ), { responseReceived:true });
+                return data;
+            } catch (error) {
+                if (error.responseReceived || attempt === attempts - 1) throw error;
+                await new Promise(resolve => setTimeout(resolve, 400 * (attempt + 1)));
+            }
+        }
     }
     async function load() {
         $('weeklyRetry').hidden = true;
