@@ -125,6 +125,8 @@ if (window.Capacitor?.isNativePlatform?.()) {
         'dashboard.html': { moduleKey: 'dashboard', defaultHome: 'dashboard.html', label: 'Dashboard', icon: 'layout-dashboard' },
         'students.html': { moduleKey: 'students', defaultHome: 'students.html', label: 'Students', icon: 'users' },
         'families.html': { moduleKey: 'families', defaultHome: 'dashboard.html', label: 'Families', icon: 'home' },
+        'weekly_tests.html': { moduleKey: 'student_scheduling', defaultHome: 'dashboard.html', label: 'Weekly Test', icon: 'calendar-check' },
+        'weekly_test_report.html': { moduleKey: 'students', defaultHome: 'dashboard.html', label: 'Weekly Test Report', icon: 'file-chart-column' },
         'student_scheduling.html': { moduleKey: 'student_scheduling', defaultHome: 'dashboard.html', label: 'Student Scheduling', icon: 'calendar-clock' },
         'assignments.html': { moduleKey: 'student_scheduling', defaultHome: 'dashboard.html', label: 'Assignments', icon: 'upload' },
         'assignment_uploading.html': { moduleKey: 'student_scheduling', defaultHome: 'dashboard.html', label: 'Upload Assignments', icon: 'file-up' },
@@ -760,6 +762,7 @@ if (window.Capacitor?.isNativePlatform?.()) {
             const schedulingNavPages = {
                 'student_scheduling.html': new Set([
                     'student_scheduling.html',
+                    'weekly_tests.html',
                     'assignments.html',
                     'assignment_uploading.html',
                     'student_timetable.html',
@@ -799,6 +802,8 @@ if (window.Capacitor?.isNativePlatform?.()) {
                 { type: 'link', page: 'classes.html', label: 'Classes', icon: 'school' },
                 { type: 'link', page: 'students.html', label: 'Students', icon: 'users' },
                 { type: 'link', page: 'students.html', hash: '#status', label: 'Examinations Report', icon: 'trending-up' },
+                { type: 'link', page: 'weekly_test_report.html', label: 'Weekly Test Report', icon: 'calendar-check' },
+                { type: 'link', page: 'certificate.html', label: 'Certificates', icon: 'award' },
                 { type: 'link', page: 'teachers.html', label: 'Teachers', icon: 'book-open' },
                 { type: 'link', page: 'staff.html', label: 'Staff', icon: 'briefcase' },
                 { type: 'link', page: 'families.html', label: 'Families', icon: 'home' },

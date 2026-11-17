@@ -3533,6 +3533,7 @@ function ensureAdminSidebarCompleteness() {
         { page: 'exam_result.html', label: 'Results', icon: 'file-badge' },
         { page: 'exam_result_history.html', label: 'Result History', icon: 'history' },
         { page: 'exams.html', label: 'Result Cards', icon: 'badge-check' },
+        { page: 'certificate.html', label: 'Certificates', icon: 'award' },
         { page: 'revenue.html', label: 'Revenue', icon: 'trending-up' },
         { page: 'teacher_salaries.html', label: 'Salaries', icon: 'wallet' },
         { page: 'bills.html', label: 'Bills', icon: 'receipt' },
@@ -3583,6 +3584,7 @@ function renderAdminSidebarSequence() {
     const schedulingNavPages = {
         'student_scheduling.html': new Set([
             'student_scheduling.html',
+            'weekly_tests.html',
             'assignments.html',
             'assignment_uploading.html',
             'student_timetable.html',
@@ -3623,6 +3625,8 @@ function renderAdminSidebarSequence() {
         { type: 'link', page: 'classes.html', label: 'Classes', icon: 'school' },
         { type: 'link', page: 'students.html', label: 'Students', icon: 'users' },
         { type: 'link', page: 'students.html', hash: '#status', label: 'Examinations Report', icon: 'trending-up' },
+        { type: 'link', page: 'weekly_test_report.html', label: 'Weekly Test Report', icon: 'calendar-check' },
+        { type: 'link', page: 'certificate.html', label: 'Certificates', icon: 'award' },
         { type: 'link', page: 'teachers.html', label: 'Teachers', icon: 'book-open' },
         { type: 'link', page: 'staff.html', label: 'Staff', icon: 'briefcase' },
         { type: 'link', page: 'families.html', label: 'Families', icon: 'home' },
@@ -3733,7 +3737,7 @@ function ensureSchedulingNav() {
     if (navLinks.querySelector('[data-scheduling-nav]')) return;
 
     const currentPage = getCurrentPageName();
-    const studentSchedulingPages = ['student_scheduling.html', 'assignments.html', 'assignment_uploading.html', 'student_timetable.html', 'student_diary.html', 'student_leave_requests.html', 'student_courses.html', 'student_performance.html', 'quiz_uploading.html', 'lecture_uploading.html', 'exam_schedule.html', 'stuck_off.html'];
+    const studentSchedulingPages = ['weekly_tests.html', 'student_scheduling.html', 'assignments.html', 'assignment_uploading.html', 'student_timetable.html', 'student_diary.html', 'student_leave_requests.html', 'student_courses.html', 'student_performance.html', 'quiz_uploading.html', 'lecture_uploading.html', 'exam_schedule.html', 'stuck_off.html'];
     const isStudentSchedulingPage = studentSchedulingPages.includes(currentPage);
     const teacherSchedulingPages = ['teacher_scheduling.html', 'teacher_timetable.html', 'teacher_assigned_classes.html', 'teacher_leave_requests.html'];
     const isTeacherSchedulingPage = teacherSchedulingPages.includes(currentPage);

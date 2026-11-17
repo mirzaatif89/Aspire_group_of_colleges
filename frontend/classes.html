@@ -456,6 +456,14 @@
             return cls.keywords.some((keyword) => studentClass === keyword || studentClass === `class ${keyword}`);
         }
 
+        function classesPageStudentMatchesCampus(student) {
+            const campus = typeof getGlobalCampusFilterForCurrentUser === 'function'
+                ? getGlobalCampusFilterForCurrentUser()
+                : (localStorage.getItem('eduCore_dashboard_campus_filter') || 'all');
+            return !campus || campus === 'all' ||
+                String(student.campusName || student.branchName || student.campus || 'Main Campus').trim().toLowerCase() === String(campus).trim().toLowerCase();
+        }
+
         function classesPageStudentMatchesClassSection(student, cls, section = '') {
             if (!classesPageStudentMatchesClass(student, cls)) return false;
             if (String(section || '').trim().toLowerCase() === 'all') return true;
@@ -465,6 +473,7 @@
 
         function formatClassesPageClassSection(className, section = '') {
             const sectionName = getClassesPageSection(section);
+            if (sectionName.toLowerCase() === 'all') return `${className} - All Sections`;
             return sectionName.toLowerCase() === 'general'
                 ? `${className} - General`
                 : `${className} - Section ${sectionName}`;
@@ -683,13 +692,6 @@
 
             if (!cls || !summary || !promoteBtn || !promoteSelectedBtn) return;
 
-            if (sectionName.toLowerCase() === 'all') {
-                summary.innerText = 'Select a specific section to promote students. The list above is currently showing all sections.';
-                promoteBtn.style.display = 'none';
-                promoteSelectedBtn.style.display = 'none';
-                return;
-            }
-
             if (!nextClass) {
                 summary.innerText = `${formatClassesPageClassSection(cls.name, sectionName)} is the final stage in the current ladder. Promotion is not available.`;
                 promoteBtn.style.display = 'none';
@@ -697,7 +699,7 @@
                 return;
             }
 
-            summary.innerText = `One click will promote all students from ${formatClassesPageClassSection(cls.name, sectionName)} to ${formatClassesPageClassSection(nextClass.name, sectionName)} and store this action in promotion history.`;
+            summary.innerText = `One click will promote all students from ${formatClassesPageClassSection(cls.name, sectionName)} to ${formatClassesPageClassSection(nextClass.name, sectionName)} in the selected campus scope, keeping their sections, and store this action in promotion history.`;
             promoteBtn.style.display = 'inline-flex';
             promoteSelectedBtn.style.display = 'inline-flex';
             promoteBtn.dataset.currentClass = classId;
@@ -718,6 +720,7 @@
 
             let students = getData(STORAGE_KEY_STUDENTS);
             const matchingStudents = students.filter((student) =>
+                classesPageStudentMatchesCampus(student) &&
                 classesPageStudentMatchesClassSection(student, currentClass, currentSection)
             );
 
@@ -734,7 +737,8 @@
                 if (!match) return student;
                 return {
                     ...student,
-                    classGrade: nextClass.name
+                    classGrade: nextClass.name,
+                    section: splitClassesPageClassAndSection(student.classGrade, student.section).section
                 };
             });
 
@@ -836,16 +840,26 @@
             }
 
             let students = getData(STORAGE_KEY_STUDENTS);
-            const selectedStudents = students.filter(student => selectedIds.includes(student.id));
+            const selectedStudents = students.filter(student =>
+                selectedIds.includes(String(student.id)) &&
+                classesPageStudentMatchesCampus(student) &&
+                classesPageStudentMatchesClassSection(student, currentClass, currentSection)
+            );
+            if (!selectedStudents.length) {
+                alert('No matching students available to promote.');
+                return;
+            }
+            const promotionIds = new Set(selectedStudents.map(student => String(student.id)));
 
             const shouldPromote = await showAppConfirm(`Promote ${selectedStudents.length} selected student(s) from ${formatClassesPageClassSection(currentClass.name, currentSection)} to ${formatClassesPageClassSection(nextClass.name, currentSection)}?`);
             if (!shouldPromote) return;
 
             students = students.map(student => {
-                if (!selectedIds.includes(student.id)) return student;
+                if (!promotionIds.has(String(student.id))) return student;
                 return {
                     ...student,
-                    classGrade: nextClass.name
+                    classGrade: nextClass.name,
+                    section: splitClassesPageClassAndSection(student.classGrade, student.section).section
                 };
             });
 
